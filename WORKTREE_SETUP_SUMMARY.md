@@ -112,11 +112,13 @@ git worktree list
 Result:
 
 ```text
-C:/Users/slaye/Documents/Codex/BenchOS           f25551b [main]
-C:/Users/slaye/Documents/Codex/BenchOS-audit     f25551b [audit-cleanup]
-C:/Users/slaye/Documents/Codex/BenchOS-cleanup   f25551b [cleanup-phase-1]
-C:/Users/slaye/Documents/Codex/BenchOS-ui-polish f25551b [ui-polish-audit]
+C:/Users/slaye/Documents/Codex/BenchOS           [main]
+C:/Users/slaye/Documents/Codex/BenchOS-audit     [audit-cleanup]
+C:/Users/slaye/Documents/Codex/BenchOS-cleanup   [cleanup-phase-1]
+C:/Users/slaye/Documents/Codex/BenchOS-ui-polish [ui-polish-audit]
 ```
+
+The actual commit id shown by `git worktree list` can change as setup docs are committed.
 
 ## Important Notes
 
