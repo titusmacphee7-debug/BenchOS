@@ -38,6 +38,19 @@ C:\Program Files\Git\cmd\git.exe
 - Running Git by full path in the BenchOS app folder still reports: `fatal: not a git repository`.
 - So the remaining blocker is the missing `.git` repository folder, not Git itself.
 
+Second update:
+
+- The BenchOS folder was initialized as a new local Git repository.
+- Main branch: `main`.
+- First local commit was created:
+
+```text
+f25551b Initial BenchOS repository setup
+```
+
+- `.env`, `node_modules`, and `dist` were confirmed ignored before the first commit.
+- The planned worktrees were created successfully.
+
 ## Framework And Package Manager
 
 - Framework: Vite + React + TypeScript.
@@ -151,37 +164,34 @@ PowerShell inspection commands were also used to read:
 
 ## Are Worktrees Safe To Create?
 
-Not yet.
+Yes.
 
-Worktrees are not safe to create until both of these are true:
+Git is now installed, this folder is now a Git repository, and the initial main branch was clean before worktrees were created.
 
-1. Git is installed and available to the shell.
-2. BenchOS is opened from a real Git repository with a clean `git status`.
+Created worktrees:
 
-Git is now installed. The remaining blocker is that this BenchOS folder is not currently a Git repository.
+- `C:\Users\slaye\Documents\Codex\BenchOS-audit` on branch `audit-cleanup`
+- `C:\Users\slaye\Documents\Codex\BenchOS-cleanup` on branch `cleanup-phase-1`
+- `C:\Users\slaye\Documents\Codex\BenchOS-ui-polish` on branch `ui-polish-audit`
 
-Because no worktrees were created, I did not run `git worktree list` and did not create a populated `WORKTREE_SETUP_SUMMARY.md`.
+`git worktree list` was run successfully. Details are in:
+
+- `WORKTREE_SETUP_SUMMARY.md`
 
 ## Exact Next Steps
 
-1. Restart Codex or open a new terminal so plain `git` is available on PATH.
-2. Open the real Git checkout of BenchOS, or turn this copied folder into a Git repository only if you are sure this is the correct project source.
-3. Ask Codex to run:
+1. Keep `C:\Users\slaye\Documents\Codex\BenchOS` as the main trusted folder.
+2. Use `C:\Users\slaye\Documents\Codex\BenchOS-audit` for audit/report work only.
+3. Use `C:\Users\slaye\Documents\Codex\BenchOS-cleanup` for safe low-risk cleanup only.
+4. Use `C:\Users\slaye\Documents\Codex\BenchOS-ui-polish` for UI audit/report work only.
+5. In any folder, ask Codex to run:
 
 ```bash
 git status --short --branch
 ```
 
-4. Continue only if Git works and the working tree is clean.
-5. Then ask Codex to create the planned worktrees:
-
-```text
-BenchOS-audit on branch audit-cleanup
-BenchOS-cleanup on branch cleanup-phase-1
-BenchOS-ui-polish on branch ui-polish-audit
-```
-
-6. Use `docs/CODEX_WORKFLOW.md` for the prompts to run in each worktree.
+6. Continue work only if the status is clean or Codex clearly explains the existing changes.
+7. Use `WORKTREE_SETUP_SUMMARY.md` for the exact prompts to run in each worktree.
 
 ## Warnings
 

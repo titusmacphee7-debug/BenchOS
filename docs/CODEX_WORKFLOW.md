@@ -138,12 +138,14 @@ For `BenchOS-ui-polish`:
 Audit the BenchOS UI for polish opportunities. Preserve the existing design and orange accent. Do not edit app code. Write a report with screenshots or file references if useful.
 ```
 
-## Current Warning
+## Current Status
 
-At the time this guide was created, this folder did not contain a `.git` folder. Git was later installed successfully, but this BenchOS folder still must be opened from a real Git repository before worktrees can be created.
+At first, this folder did not contain a `.git` folder. Git was later installed successfully, this folder was initialized as a local Git repository, and the planned worktrees were created.
 
 If plain `git` does not work immediately in Codex, restart Codex or open a new terminal so Windows refreshes the PATH. Git is installed at:
 
 ```text
 C:\Program Files\Git\cmd\git.exe
 ```
+
+See `WORKTREE_SETUP_SUMMARY.md` for the exact worktree folders, branches, and starter prompts.
