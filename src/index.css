@@ -73,3 +73,172 @@ a {
   background: rgba(139, 147, 161, 0.26);
   border-radius: 999px;
 }
+
+.hammer-loader {
+  position: relative;
+  width: 150px;
+  height: 96px;
+  overflow: hidden;
+  border-radius: 18px;
+}
+
+.hammer-loader__plate {
+  position: absolute;
+  inset-block: 30px;
+  width: 50%;
+  border: 1px solid rgba(139, 147, 161, 0.22);
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.11), rgba(255, 255, 255, 0.02)),
+    #141920;
+  box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.35);
+  animation: benchos-plate-split 900ms cubic-bezier(0.2, 0.8, 0.2, 1) 420ms both;
+}
+
+.hammer-loader__plate--left {
+  left: 0;
+  border-radius: 14px 0 0 14px;
+}
+
+.hammer-loader__plate--right {
+  right: 0;
+  border-radius: 0 14px 14px 0;
+  animation-name: benchos-plate-split-right;
+}
+
+.hammer-loader__hammer {
+  position: absolute;
+  left: 38px;
+  top: 2px;
+  width: 64px;
+  height: 64px;
+  fill: #f5f7fa;
+  filter: drop-shadow(0 10px 14px rgba(0, 0, 0, 0.45));
+  transform-origin: 70% 80%;
+  animation: benchos-hammer-strike 900ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.hammer-loader__ring {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 106, 0, 0.9);
+  border-radius: 999px;
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0.35);
+  animation: benchos-impact-ring 900ms ease-out 330ms both;
+}
+
+.hammer-loader__spark {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 4px;
+  height: 4px;
+  border-radius: 999px;
+  background: #ff6a00;
+  opacity: 0;
+  transform: translate(-50%, -50%);
+  animation: benchos-spark 720ms ease-out 350ms both;
+}
+
+.hammer-loader__spark--one {
+  --spark-x: -32px;
+  --spark-y: -18px;
+}
+
+.hammer-loader__spark--two {
+  --spark-x: 34px;
+  --spark-y: -14px;
+}
+
+.hammer-loader__spark--three {
+  --spark-x: 18px;
+  --spark-y: 22px;
+}
+
+@keyframes benchos-hammer-strike {
+  0% {
+    opacity: 0;
+    transform: rotate(-38deg) translate(-16px, -10px);
+  }
+  42% {
+    opacity: 1;
+    transform: rotate(-38deg) translate(-8px, -4px);
+  }
+  58% {
+    transform: rotate(0deg) translate(0, 9px);
+  }
+  100% {
+    opacity: 0;
+    transform: rotate(9deg) translate(10px, 18px);
+  }
+}
+
+@keyframes benchos-impact-ring {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.35);
+  }
+  35% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(3.2);
+  }
+}
+
+@keyframes benchos-spark {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.6);
+  }
+  35% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(calc(-50% + var(--spark-x)), calc(-50% + var(--spark-y))) scale(0.9);
+  }
+}
+
+@keyframes benchos-plate-split {
+  0%,
+  42% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  100% {
+    opacity: 0.44;
+    transform: translateX(-32px);
+  }
+}
+
+@keyframes benchos-plate-split-right {
+  0%,
+  42% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  100% {
+    opacity: 0.44;
+    transform: translateX(32px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hammer-loader__hammer,
+  .hammer-loader__ring,
+  .hammer-loader__spark,
+  .hammer-loader__plate {
+    animation: none;
+  }
+
+  .hammer-loader__hammer,
+  .hammer-loader__ring,
+  .hammer-loader__spark {
+    display: none;
+  }
+}

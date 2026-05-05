@@ -1,12 +1,12 @@
 import { BrowserRouter } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import { AppRoutes } from './app/routes'
-import { useSeedDatabase } from './data/hooks'
+import { HammerLoadingReveal } from './components/loading/HammerLoadingReveal'
+import { db } from './data/db'
 import { clearAuthSession, persistAuth0Session } from './lib/auth/authService'
 import { useBenchAuth0 } from './lib/auth/benchAuth0Context'
 
 export default function App() {
-  const { ready, error } = useSeedDatabase()
   const auth0 = useBenchAuth0()
   const [authReady, setAuthReady] = useState(false)
 
@@ -38,25 +38,34 @@ export default function App() {
     }
   }, [auth0.available, auth0.isAuthenticated, auth0.isLoading, auth0.user?.email, auth0.user?.name, auth0.user?.picture, auth0.user?.sub])
 
-  if (error) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-bench-bg p-6 text-bench-text">
-        <div className="panel-surface max-w-lg rounded-xl p-6">
-          <h1 className="text-xl font-semibold">BenchOS could not initialize app data.</h1>
-          <p className="mt-2 text-sm text-bench-muted">{String(error)}</p>
-        </div>
-      </div>
-    )
-  }
+  useEffect(() => {
+    if (!authReady) return undefined
+    let active = true
+    const runSeedWarmup = () => {
+      import('./data/seed/seedDatabase')
+        .then((seedModule) => seedModule.ensureDatabaseSeeded(db, { includeSampleData: false }))
+        .catch(() => undefined)
+    }
 
-  if (!ready || !authReady || (auth0.available && auth0.isLoading)) {
+    const scheduleIdle = window.requestIdleCallback ?? ((callback: IdleRequestCallback) => window.setTimeout(() => callback({ didTimeout: false, timeRemaining: () => 0 }), 1))
+    const cancelIdle = window.cancelIdleCallback ?? window.clearTimeout
+    const idleId = scheduleIdle(() => {
+      if (active) runSeedWarmup()
+    }, { timeout: 1800 })
+
+    return () => {
+      active = false
+      cancelIdle(idleId)
+    }
+  }, [authReady])
+
+  if (!authReady || (auth0.available && auth0.isLoading)) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-bench-bg p-6 text-bench-text">
-        <div className="panel-surface rounded-xl p-6 text-center">
-          <p className="text-lg font-semibold">Preparing your secure workshop...</p>
-          <p className="mt-2 text-sm text-bench-muted">Loading the Tool Library and checking your sign-in session.</p>
-        </div>
-      </div>
+      <HammerLoadingReveal
+        fullScreen
+        label="Preparing secure workshop access..."
+        slowLabel="Checking Auth0 session state. Catalog data will warm up after the app shell is ready."
+      />
     )
   }
 

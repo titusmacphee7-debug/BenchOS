@@ -13,9 +13,9 @@ import {
 } from 'lucide-react'
 import { useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useActiveNotifications, useAuthSessionState, useUserProfile } from '../../data/hooks'
 import { clearAuthSession } from '../../lib/auth/authService'
 import { useBenchAuth0 } from '../../lib/auth/benchAuth0Context'
+import { useActiveNotifications, useAuthSessionState, useUserProfile } from '../../lib/auth/useAuthRouteState'
 import { Button } from '../ui/Button'
 
 export function TopBar() {

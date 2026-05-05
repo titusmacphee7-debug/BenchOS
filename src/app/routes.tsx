@@ -1,7 +1,8 @@
-import { lazy, Suspense, type ReactNode } from 'react'
+import { Component, lazy, Suspense, type ReactNode } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
+import { HammerLoadingReveal } from '../components/loading/HammerLoadingReveal'
 import { AppShell } from '../components/layout/AppShell'
-import { useAccountOnboardingStatus, useAuthGateState } from '../data/hooks'
+import { useAccountOnboardingStatus, useAuthGateState } from '../lib/auth/useAuthRouteState'
 
 const AccountOnboardingPage = lazy(() =>
   import('../features/auth/AccountOnboardingPage').then((module) => ({ default: module.AccountOnboardingPage })),
@@ -41,25 +42,50 @@ const WorkshopScorePage = lazy(() =>
 )
 
 function routeElement(element: ReactNode) {
-  return <Suspense fallback={<RouteLoadingFallback />}>{element}</Suspense>
+  return (
+    <RouteErrorBoundary>
+      <Suspense fallback={<RouteLoadingFallback />}>{element}</Suspense>
+    </RouteErrorBoundary>
+  )
+}
+
+class RouteErrorBoundary extends Component<{ children: ReactNode }, { failed: boolean }> {
+  state = { failed: false }
+
+  static getDerivedStateFromError() {
+    return { failed: true }
+  }
+
+  render() {
+    if (!this.state.failed) return this.props.children
+    return (
+      <div className="panel-surface rounded-xl p-5 text-bench-text" role="alert">
+        <p className="text-sm font-semibold text-bench-red">BenchOS could not load this workshop view.</p>
+        <p className="mt-2 text-sm leading-6 text-bench-muted">Retry the route. If it keeps happening, the latest app bundle may still be updating.</p>
+        <button
+          type="button"
+          className="mt-4 inline-flex min-h-10 items-center justify-center rounded-lg border border-bench-orange/40 bg-bench-orange/5 px-4 text-sm font-semibold text-bench-orange hover:bg-bench-orange/10"
+          onClick={() => {
+            this.setState({ failed: false })
+            window.location.reload()
+          }}
+        >
+          Retry view
+        </button>
+      </div>
+    )
+  }
 }
 
 function RouteLoadingFallback() {
   return (
-    <div className="panel-surface rounded-xl p-5 text-sm text-bench-muted" role="status" aria-live="polite">
-      Loading workshop view...
-    </div>
+    <HammerLoadingReveal label="Loading workshop view..." />
   )
 }
 
 function SessionLoadingFallback() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-bench-bg p-6 text-bench-text">
-      <div className="panel-surface rounded-xl p-6 text-center">
-        <p className="text-lg font-semibold">Checking secure session...</p>
-        <p className="mt-2 text-sm text-bench-muted">BenchOS will send you to sign in if this device has no active account session.</p>
-      </div>
-    </div>
+    <HammerLoadingReveal fullScreen label="Checking secure session..." slowLabel="BenchOS will send you to sign in if this device has no active account session." />
   )
 }
 
