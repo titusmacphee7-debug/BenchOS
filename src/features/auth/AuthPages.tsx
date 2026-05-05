@@ -1,4 +1,4 @@
-import { KeyRound, LogOut, Mail, RefreshCw, UserRound } from 'lucide-react'
+import { KeyRound, LogOut, Mail, RefreshCw, ShieldCheck, UserRound } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
@@ -6,7 +6,8 @@ import { Button } from '../../components/ui/Button'
 import { Card, CardTitle } from '../../components/ui/Card'
 import { StatusPill } from '../../components/ui/StatusPill'
 import { useAuthSessionState, useUserProfile, useWorkshopProfile } from '../../data/hooks'
-import { getCurrentSession, resendSignupVerification, resetPassword, signInWithMagicLink, signInWithPassword, signOut, signUpWithPassword } from '../../lib/auth/authService'
+import { getCurrentSession, persistExternalAuthSession, resendSignupVerification, resetPassword, signInWithMagicLink, signInWithPassword, signOut, signUpWithPassword } from '../../lib/auth/authService'
+import { useBenchAuth0 } from '../../lib/auth/benchAuth0Context'
 import { isSupabaseConfigured } from '../../lib/auth/supabaseClient'
 import { syncNow } from '../../lib/sync/cloudSyncService'
 
@@ -26,7 +27,7 @@ export function SignupPage() {
   return (
     <AuthPanel
       title="Create your BenchOS account"
-      description="Create a Supabase Auth account so BenchOS can attach workshop data to your signed-in identity."
+      description="Create an account so BenchOS can attach workshop data to your signed-in identity."
       mode="signup"
     />
   )
@@ -44,10 +45,13 @@ export function ResetPasswordPage() {
 
 export function AccountPage() {
   const navigate = useNavigate()
+  const auth0 = useBenchAuth0()
   const session = useAuthSessionState()
   const userProfile = useUserProfile()
   const workshop = useWorkshopProfile()
   const configured = isSupabaseConfigured()
+  const isSupabaseSession = session?.provider === 'supabase'
+  const auth0Session = session?.provider === 'auth0'
   const profileName = userProfile?.displayName?.trim()
   const displayName = profileName && profileName !== 'Local Mode' ? profileName : session?.email?.split('@')[0] ?? 'Not set'
   const [message, setMessage] = useState<string>()
@@ -78,7 +82,7 @@ export function AccountPage() {
         <div>
           <h1 className="text-3xl font-bold text-bench-text">Account</h1>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-bench-muted">
-            Supabase Auth is required for production access. Signing out returns this device to the login screen.
+            Auth0 is the primary production sign-in path. Supabase Auth remains available for the existing sync layer.
           </p>
         </div>
         <StatusPill label={session?.status === 'signed_in' ? 'Signed In' : 'Signed Out'} tone={session?.status === 'signed_in' ? 'green' : 'orange'} />
@@ -89,11 +93,12 @@ export function AccountPage() {
           <CardTitle title="Workshop Profile" action={<CloudStatus configured={configured} signedIn={session?.status === 'signed_in'} />} />
           <div className="grid gap-3">
             <InfoRow label="Signed-in email" value={session?.email ?? 'Not signed in'} />
+            <InfoRow label="Identity provider" value={auth0Session ? 'Auth0' : isSupabaseSession ? 'Supabase' : 'Not signed in'} />
             <InfoRow label="Display name" value={displayName} />
             <InfoRow label="Workshop" value={workshop?.name ?? 'Not set'} />
             <InfoRow label="Workshop type" value={workshop?.type ?? 'Not set'} />
             <InfoRow label="Skill level" value={workshop?.skillLevel ?? 'Not set'} />
-            <InfoRow label="Cloud sync" value={session?.cloudSyncEnabled ? 'Enabled' : configured ? 'Available after sign-in' : 'Not configured'} />
+            <InfoRow label="Cloud sync" value={session?.cloudSyncEnabled ? 'Enabled' : auth0Session ? 'Not connected to Auth0 yet' : configured ? 'Available after Supabase sign-in' : 'Not configured'} />
             <InfoRow label="Onboarding" value={userProfile?.accountOnboardingCompletedAt ? 'Complete' : 'Needs setup'} />
             <InfoRow label="Last sync" value={formatDate(session?.lastSyncAt)} />
             <InfoRow label="Pending records" value={String(session?.pendingSyncCount ?? 0)} />
@@ -102,7 +107,7 @@ export function AccountPage() {
           <div className="mt-5 flex flex-wrap gap-3">
             <Button
               icon={<RefreshCw size={16} />}
-              disabled={!configured || session?.status !== 'signed_in' || working}
+              disabled={!configured || !isSupabaseSession || session?.status !== 'signed_in' || working}
               onClick={() => void run('Sync completed.', async () => { await syncNow() })}
             >
               Sync now
@@ -110,10 +115,15 @@ export function AccountPage() {
             <Button
               variant="outline"
               icon={<LogOut size={16} />}
-              disabled={!configured || session?.status !== 'signed_in' || working}
+              disabled={session?.status !== 'signed_in' || working || (isSupabaseSession && !configured)}
               onClick={() => void run('Signed out.', async () => {
-                await signOut()
-                navigate('/login')
+                if (auth0Session && auth0.available) {
+                  await persistExternalAuthSession(null)
+                  auth0.logout()
+                } else {
+                  await signOut()
+                  navigate('/login')
+                }
               })}
             >
               Sign out
@@ -126,7 +136,7 @@ export function AccountPage() {
         <Card>
           <CardTitle title="Account Access" />
           <p className="text-sm leading-6 text-bench-muted">
-            Supabase Auth is the current identity layer. Netlify Database will become the production app data store in a later approved slice.
+            Auth0 handles primary login. Supabase stays in place for the existing cloud sync feature until a later approved data-store slice.
           </p>
           <div className="mt-4 grid gap-3">
             <Link to="/login"><Button className="w-full" icon={<KeyRound size={16} />}>Sign in</Button></Link>
@@ -140,6 +150,7 @@ export function AccountPage() {
 
 function AuthPanel({ title, description, mode }: { title: string; description: string; mode: AuthMode }) {
   const navigate = useNavigate()
+  const auth0 = useBenchAuth0()
   const configured = isSupabaseConfigured()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -178,6 +189,18 @@ function AuthPanel({ title, description, mode }: { title: string; description: s
       }
     } finally {
       setWorking(false)
+    }
+  }
+
+  async function auth0Redirect() {
+    setWorking(true)
+    setMessage(undefined)
+    setError(undefined)
+    try {
+      await (mode === 'signup' ? auth0.signup() : auth0.login())
+    } catch (caught) {
+      setWorking(false)
+      setError(caught instanceof Error ? caught.message : String(caught))
     }
   }
 
@@ -232,13 +255,32 @@ function AuthPanel({ title, description, mode }: { title: string; description: s
         </div>
         {!configured && (
           <p className="mt-5 max-w-2xl rounded-lg border border-bench-orange/30 bg-bench-orange/10 p-3 text-sm text-bench-orange">
-            Supabase env vars are missing, so production sign-in is disabled until they are added in the environment.
+            Supabase env vars are missing, so Supabase password and magic-link sign-in are disabled. Auth0 can still work after its dashboard URLs are configured.
           </p>
         )}
       </section>
 
       <Card className="bg-bench-orange/5">
-        <CardTitle title={mode === 'reset' ? 'Password Reset' : 'Supabase Auth'} action={<CloudStatus configured={configured} signedIn={false} />} />
+        <CardTitle title={mode === 'reset' ? 'Password Reset' : 'Account Sign In'} action={<CloudStatus configured={configured || auth0.available} signedIn={false} />} />
+        {mode !== 'reset' && (
+          <div className="mb-4 grid gap-3">
+            <Button
+              type="button"
+              variant="primary"
+              icon={<ShieldCheck size={16} />}
+              disabled={working || auth0.isLoading || !auth0.available}
+              onClick={() => void auth0Redirect()}
+            >
+              {mode === 'signup' ? 'Continue with Auth0 sign up' : 'Continue with Auth0'}
+            </Button>
+            <p className="rounded-lg border border-bench-orange/25 bg-bench-orange/10 p-3 text-xs leading-5 text-bench-orange">
+              Auth0 dashboard setup still needs these exact Allowed Callback URL, Logout URL, and Web Origin entries:
+              {' '}
+              {auth0.requiredOrigins.callbacks.join(', ')}.
+            </p>
+            {auth0.error && <p className="rounded-lg border border-bench-red/30 bg-bench-red/10 p-3 text-sm text-bench-red">{auth0.error.message}</p>}
+          </div>
+        )}
         <form className="grid gap-3" onSubmit={(event) => void submit(event)}>
           <label className="grid gap-2 text-sm font-semibold text-bench-text">
             Email
@@ -263,7 +305,7 @@ function AuthPanel({ title, description, mode }: { title: string; description: s
             </Button>
           )}
           <p className="text-xs leading-5 text-bench-muted">
-            BenchOS uses Supabase Auth. No raw passwords are stored in the app.
+            BenchOS uses Auth0 Universal Login first, with Supabase Auth kept as a sync fallback. No raw passwords are stored in the app.
           </p>
           {message && <p className="rounded-lg border border-bench-green/30 bg-bench-green/10 p-3 text-sm text-bench-green">{message}</p>}
           {error && <p className="rounded-lg border border-bench-red/30 bg-bench-red/10 p-3 text-sm text-bench-red">{error}</p>}

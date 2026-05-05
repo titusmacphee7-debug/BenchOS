@@ -34,7 +34,21 @@ The repo includes `netlify.toml`, so Netlify should also detect these build sett
 
 ## B. Add Environment Variables In Netlify
 
-BenchOS production requires Supabase Auth before the dashboard and workshop pages open. Add these public frontend variables in Netlify.
+BenchOS uses Auth0 for primary production login. The current Auth0 domain and client ID are included as public defaults in the app. If you want Netlify to control them instead, add these public frontend variables:
+
+```text
+VITE_AUTH0_DOMAIN
+VITE_AUTH0_CLIENT_ID
+```
+
+Use:
+
+```text
+VITE_AUTH0_DOMAIN=appbenchos.us.auth0.com
+VITE_AUTH0_CLIENT_ID=Y0a2nfZcrGrwkAFWpeeHn6CoZPmcwCKh
+```
+
+BenchOS also supports Supabase Auth and cloud sync as a fallback. Add these public Supabase variables in Netlify if you want the existing sync feature.
 
 In Netlify:
 
@@ -114,7 +128,9 @@ DNS and HTTPS can take time to activate. It is normal for the custom domain or c
 After Netlify says the deploy is live, test:
 
 - `appbenchos.com` loads.
-- Login page works.
+- Auth0 login opens Universal Login.
+- Auth0 login returns to BenchOS after sign-in.
+- Auth0 logout returns to BenchOS after sign-out.
 - Supabase connection works if Supabase variables were added.
 - Refreshing app routes works, such as `/tool-library` or `/projects`.
 - Dashboard loads.

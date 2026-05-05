@@ -2,7 +2,7 @@
 
 BenchOS is a workshop operating system for tools, materials, projects, readiness, mastery, diagnostics, and buying decisions.
 
-Current app version: `v0.04`
+Current app version: `v0.05`
 
 Version rule: every committed app/source-code change increases the visible app version by `0.01`. See [VERSION_HISTORY.md](VERSION_HISTORY.md).
 
@@ -10,10 +10,33 @@ Version rule: every committed app/source-code change increases the visible app v
 
 ```bash
 npm install --legacy-peer-deps
-npm run dev -- --host 127.0.0.1 --port 5173
+npm run dev -- --host 127.0.0.1
 ```
 
 Open [http://127.0.0.1:5173/](http://127.0.0.1:5173/).
+
+The dev script uses port `5173` with `--strictPort` so Auth0 callback URLs do not drift to another Vite port.
+
+## Auth0 Login
+
+BenchOS uses the official Auth0 React SDK for primary production login.
+
+Current public Auth0 app settings:
+
+```bash
+VITE_AUTH0_DOMAIN=appbenchos.us.auth0.com
+VITE_AUTH0_CLIENT_ID=Y0a2nfZcrGrwkAFWpeeHn6CoZPmcwCKh
+```
+
+Add these exact URLs in the Auth0 application before testing login:
+
+```text
+Allowed Callback URLs: http://localhost:5173, http://127.0.0.1:5173, https://appbenchos.com
+Allowed Logout URLs:   http://localhost:5173, http://127.0.0.1:5173, https://appbenchos.com
+Allowed Web Origins:   http://localhost:5173, http://127.0.0.1:5173, https://appbenchos.com
+```
+
+See [docs/AUTH0_SETUP.md](docs/AUTH0_SETUP.md) for the beginner checklist.
 
 ## Supabase Auth
 

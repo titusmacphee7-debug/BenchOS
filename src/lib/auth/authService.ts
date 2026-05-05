@@ -3,6 +3,14 @@ import type { BenchOsDatabase } from '../../data/db'
 import { db } from '../../data/db'
 import { getSupabaseClient, isSupabaseConfigured } from './supabaseClient'
 
+type ExternalAuthSessionInput = {
+  provider: 'auth0'
+  userId: string
+  email?: string
+  displayName?: string
+  avatarUrl?: string
+}
+
 export type AuthServiceResult = {
   user?: User
   session?: Session | null
@@ -157,4 +165,51 @@ export async function persistAuthSession(session: Session | null, user?: User | 
       updatedAt: now,
     })
   }
+}
+
+export async function persistExternalAuthSession(session: ExternalAuthSessionInput | null, database: BenchOsDatabase = db) {
+  const now = new Date().toISOString()
+  await database.authSessionStates.put({
+    id: 'local-session',
+    status: session ? 'signed_in' : 'signed_out',
+    provider: session?.provider ?? 'auth0',
+    userId: session?.userId,
+    email: session?.email,
+    cloudBackupEnabled: false,
+    cloudSyncEnabled: false,
+    syncStatus: 'local',
+    pendingSyncCount: 0,
+    conflictCount: 0,
+    updatedAt: now,
+  })
+
+  if (session) {
+    const existingProfile = await database.userProfiles.get('local-user')
+    await database.userProfiles.put({
+      ...(existingProfile ?? {
+        id: 'local-user',
+        createdAt: now,
+      }),
+      id: 'local-user',
+      authUserId: session.userId,
+      ownerUserId: session.userId,
+      email: session.email,
+      avatarUrl: session.avatarUrl ?? existingProfile?.avatarUrl,
+      displayName: existingProfile?.displayName && existingProfile.displayName !== 'Local Mode'
+        ? existingProfile.displayName
+        : session.displayName ?? session.email?.split('@')[0] ?? 'BenchOS User',
+      accountOnboardingCompletedAt: existingProfile?.accountOnboardingCompletedAt,
+      accountOnboardingVersion: existingProfile?.accountOnboardingVersion,
+      localOnly: false,
+      syncStatus: 'local',
+      createdAt: existingProfile?.createdAt ?? now,
+      updatedAt: now,
+    })
+  }
+}
+
+export async function clearExternalAuthSession(provider: ExternalAuthSessionInput['provider'], database: BenchOsDatabase = db) {
+  const existingSession = await database.authSessionStates.get('local-session')
+  if (existingSession?.provider !== provider) return
+  await persistExternalAuthSession(null, database)
 }

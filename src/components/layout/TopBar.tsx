@@ -14,11 +14,13 @@ import {
 import { useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useActiveNotifications, useAuthSessionState, useUserProfile } from '../../data/hooks'
-import { signOut } from '../../lib/auth/authService'
+import { persistExternalAuthSession, signOut } from '../../lib/auth/authService'
+import { useBenchAuth0 } from '../../lib/auth/benchAuth0Context'
 import { Button } from '../ui/Button'
 
 export function TopBar() {
   const navigate = useNavigate()
+  const auth0 = useBenchAuth0()
   const session = useAuthSessionState()
   const userProfile = useUserProfile()
   const notifications = useActiveNotifications()
@@ -28,7 +30,8 @@ export function TopBar() {
   const [modePromptOpen, setModePromptOpen] = useState(false)
   const searchInputRef = useRef<HTMLInputElement>(null)
   const signedIn = session?.status === 'signed_in'
-  const label = signedIn ? 'Synced' : 'Sign in'
+  const auth0Session = session?.provider === 'auth0'
+  const label = signedIn ? auth0Session ? 'Signed in' : 'Synced' : 'Sign in'
   const profileName = userProfile?.displayName?.trim()
   const displayName = profileName && profileName !== 'Local Mode' ? profileName : session?.email?.split('@')[0] ?? 'Account'
   const activeNotifications = notifications ?? []
@@ -42,6 +45,12 @@ export function TopBar() {
     setAccountOpen(false)
     if (!signedIn) {
       navigate('/login')
+      return
+    }
+
+    if (auth0Session && auth0.available) {
+      await persistExternalAuthSession(null)
+      auth0.logout()
       return
     }
 

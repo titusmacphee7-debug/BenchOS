@@ -1,16 +1,17 @@
 {
   "name": "benchos",
   "private": true,
-  "version": "0.0.4",
+  "version": "0.0.5",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --port 5173 --strictPort",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "test": "vitest run",
     "preview": "vite preview"
   },
   "dependencies": {
+    "@auth0/auth0-react": "^2.16.2",
     "@hookform/resolvers": "^5.2.2",
     "@supabase/supabase-js": "^2.105.1",
     "clsx": "^2.1.1",

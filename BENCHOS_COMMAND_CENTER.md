@@ -17,7 +17,7 @@ This file keeps the BenchOS Codex chats coordinated and safe. Use plain language
 - Real BenchOS app folder: `C:\Users\slaye\Documents\Codex\BenchOS`.
 - Launcher folder: `C:\Users\slaye\OneDrive\Documents\New project`.
 - Main branch: `main`.
-- Current tracked app version: `v0.04`.
+- Current tracked app version: `v0.05`.
 - Version rule: every committed app/source-code change must increase the visible app version by `0.01`.
 - Shared version source: `src/lib/version.ts`.
 - The main folder is the trusted coordination and review folder.
@@ -151,3 +151,12 @@ Paste future chat summaries below this line.
 - These files were previously tracked but locally deleted.
 - No app imports referenced these files at deletion time.
 - Version bumped from `v0.03` to `v0.04`.
+
+### v0.05 Auth0 SDK Entry
+
+- Owner requested official Auth0 React SDK integration for the current BenchOS app.
+- Auth0 public tenant/client configuration:
+  - Domain: `appbenchos.us.auth0.com`
+  - Client ID: `Y0a2nfZcrGrwkAFWpeeHn6CoZPmcwCKh`
+- Version bumped from `v0.04` to `v0.05`.
+- Vite local dev is pinned to port `5173` with `--strictPort` for Auth0 callback consistency.

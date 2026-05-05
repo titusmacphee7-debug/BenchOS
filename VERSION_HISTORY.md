@@ -5,16 +5,25 @@
 - Every committed app/source-code change must increase the visible BenchOS app version by `0.01`.
 - The app version is tracked in `src/lib/version.ts`.
 - The sidebar and Settings page read from that shared version file.
-- `package.json` uses npm-safe semver, so app `v0.04` is represented as package version `0.0.4`.
+- `package.json` uses npm-safe semver, so app `v0.05` is represented as package version `0.0.5`.
 - Coordinator, Planner, and implementation summaries should mention the current app version after each code-changing task.
 
 ## Current Version
 
 ```text
-BenchOS v0.04
+BenchOS v0.05
 ```
 
 ## History
+
+### v0.05 - Auth0 React SDK Login
+
+- Installed the official `@auth0/auth0-react` SDK.
+- Wrapped the React app in Auth0Provider.
+- Added Auth0 Universal Login buttons to the sign-in and sign-up pages.
+- Bridged Auth0 signed-in users into the existing BenchOS local auth gate.
+- Kept Supabase Auth available for the existing sync fallback.
+- Pinned Vite local development to port `5173` with `--strictPort` to prevent Auth0 callback mismatch surprises.
 
 ### v0.04 - Remove Unused Starter Assets
 
