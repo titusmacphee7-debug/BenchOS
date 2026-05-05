@@ -2,6 +2,10 @@
 
 BenchOS is a workshop operating system for tools, materials, projects, readiness, mastery, diagnostics, and buying decisions.
 
+Current app version: `v0.03`
+
+Version rule: every committed app/source-code change increases the visible app version by `0.01`. See [VERSION_HISTORY.md](VERSION_HISTORY.md).
+
 ## Local Development
 
 ```bash

@@ -2,6 +2,7 @@
 
 ## What changed
 
+- Versioned this auth slice as BenchOS `v0.03`.
 - Implemented the approved first production-auth slice for `appbenchos.com`.
 - Made login mandatory at the route shell:
   - `/login`, `/signup`, and `/reset-password` are the only public routes.

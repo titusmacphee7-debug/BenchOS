@@ -13,6 +13,7 @@ import { db } from '../../data/db'
 import { clearAllLocalData, exportBenchOsBackup, getTableCounts, importBenchOsBackup, resetSampleData, validateBenchOsBackup } from '../../lib/import-export/backup'
 import { materialsToCsv, projectsToCsv, toolUsageToCsv, toolsToCsv, wishlistToCsv } from '../../lib/import-export/csv'
 import { downloadTextFile, timestampedFilename } from '../../lib/import-export/download'
+import { APP_VERSION_LABEL, APP_VERSION_RULE } from '../../lib/version'
 
 type PendingAction = 'import' | 'resetSample' | 'clearAll' | undefined
 
@@ -165,7 +166,8 @@ export function SettingsPage() {
               </div>
             </div>
             <div className="mt-5 grid gap-3 text-sm">
-              <div className="flex justify-between"><span className="text-bench-muted">App version</span><span>v0.02</span></div>
+              <div className="flex justify-between"><span className="text-bench-muted">App version</span><span>{APP_VERSION_LABEL}</span></div>
+              <div className="flex justify-between"><span className="text-bench-muted">Version rule</span><span>{APP_VERSION_RULE}</span></div>
               <div className="flex justify-between"><span className="text-bench-muted">Seed version</span><span>{SEED_VERSION}</span></div>
               <div className="flex justify-between"><span className="text-bench-muted">Onboarding</span><span>{settingValue('onboardingComplete') === 'true' ? 'Complete' : 'Pending'}</span></div>
               <div className="flex justify-between"><span className="text-bench-muted">Last backup</span><span>{formatDate(settingValue('lastBackupAt'))}</span></div>

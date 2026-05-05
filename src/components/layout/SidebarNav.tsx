@@ -14,6 +14,7 @@ import {
 import type { LucideIcon } from 'lucide-react'
 import { NavLink } from 'react-router-dom'
 import { cn } from '../../lib/utils/cn'
+import { APP_VERSION_LABEL } from '../../lib/version'
 
 type NavItem = {
   label: string
@@ -57,7 +58,7 @@ export function SidebarNav() {
           </span>
           <div className="min-w-0 overflow-hidden whitespace-nowrap opacity-0 transition-opacity duration-200 group-hover/sidebar:opacity-100 group-focus-within/sidebar:opacity-100">
             <p className="text-2xl font-bold text-bench-text">BenchOS</p>
-            <p className="text-xs text-bench-muted">v0.02</p>
+            <p className="text-xs text-bench-muted">{APP_VERSION_LABEL}</p>
           </div>
         </div>
         <nav className="space-y-2">
