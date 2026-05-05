@@ -17,7 +17,7 @@ This file keeps the BenchOS Codex chats coordinated and safe. Use plain language
 - Real BenchOS app folder: `C:\Users\slaye\Documents\Codex\BenchOS`.
 - Launcher folder: `C:\Users\slaye\OneDrive\Documents\New project`.
 - Main branch: `main`.
-- Current tracked app version: `v0.09`.
+- Current tracked app version: `v0.10`.
 - Version rule: every committed app/source-code change must increase the visible app version by `0.01`.
 - Shared version source: `src/lib/version.ts`.
 - The main folder is the trusted coordination and review folder.
@@ -186,3 +186,10 @@ Paste future chat summaries below this line.
 - Version bumped from `v0.08` to `v0.09`.
 - Added Settings Account / Danger Zone UI, typed `DELETE` confirmation, public `/account-deleted` route, and server-side Auth0/Netlify Database deletion endpoint.
 - Auth0 Management API credentials remain server-only and must be configured in Netlify before real account deletion works.
+
+### v0.10 Netlify Database Runtime Fix Entry
+
+- Owner reported the deployed onboarding screen still showed a server setup error after Auth0 audience setup.
+- Version bumped from `v0.09` to `v0.10`.
+- Updated the Netlify Function database helper to read both `NETLIFY_DB_URL` and `NETLIFY_DATABASE_URL`, using `Netlify.env.get` when available.
+- Improved database runtime error copy for bootstrap/onboarding Functions.

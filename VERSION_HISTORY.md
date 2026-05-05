@@ -11,10 +11,17 @@
 ## Current Version
 
 ```text
-BenchOS v0.09
+BenchOS v0.10
 ```
 
 ## History
+
+### v0.10 - Netlify Database Runtime Connection Fix
+
+- Updated the Netlify Function database helper to accept both `NETLIFY_DB_URL` and `NETLIFY_DATABASE_URL`.
+- Added support for reading Function runtime variables through `Netlify.env.get` with a safe `process.env` fallback.
+- Improved the bootstrap database error copy so it points to a runtime connection issue instead of only missing setup.
+- Preserved Auth0-only production auth and did not expose database credentials.
 
 ### v0.09 - Delete Account Foundation
 

@@ -86,6 +86,16 @@ netlify/database/migrations/
 
 Netlify applies those migrations during production deploys and deploy previews after the database is initialized.
 
+The deployed Functions need a server-only database connection in the Function runtime. BenchOS supports Netlify's current and legacy connection names:
+
+```text
+NETLIFY_DB_URL
+NETLIFY_DATABASE_URL
+DATABASE_URL
+```
+
+Do not add these as `VITE_` variables. Browser code must never receive database credentials.
+
 ## D. Auth0 Dashboard URLs
 
 In the Auth0 dashboard, open the BenchOS SPA application and add:

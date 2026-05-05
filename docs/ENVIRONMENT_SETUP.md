@@ -159,6 +159,16 @@ netlify/database/migrations/
 
 Initialize it for the site with Netlify's database setup flow, then deploy so Netlify can apply migrations. Browser code must never receive database credentials.
 
+The Function database helper reads the server-only Netlify-provided connection variable. Current supported runtime names are:
+
+```text
+NETLIFY_DB_URL
+NETLIFY_DATABASE_URL
+DATABASE_URL
+```
+
+These are server-only connection strings. Do not expose them to browser code and do not add them as `VITE_` variables.
+
 ## Current Worktree Dependency Status
 
 Prepared worktrees from earlier setup:
