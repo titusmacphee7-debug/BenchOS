@@ -3,7 +3,6 @@ import {
   ChevronDown,
   Cloud,
   Command,
-  HardDrive,
   LogIn,
   LogOut,
   Palette,
@@ -29,9 +28,9 @@ export function TopBar() {
   const [modePromptOpen, setModePromptOpen] = useState(false)
   const searchInputRef = useRef<HTMLInputElement>(null)
   const signedIn = session?.status === 'signed_in'
-  const label = signedIn ? 'Synced' : 'Local Mode'
+  const label = signedIn ? 'Synced' : 'Sign in'
   const profileName = userProfile?.displayName?.trim()
-  const displayName = profileName && profileName !== 'Local Mode' ? profileName : 'Titus'
+  const displayName = profileName && profileName !== 'Local Mode' ? profileName : session?.email?.split('@')[0] ?? 'Account'
   const activeNotifications = notifications ?? []
 
   function openSearch() {
@@ -42,12 +41,12 @@ export function TopBar() {
   async function handleAccountAuth() {
     setAccountOpen(false)
     if (!signedIn) {
-      navigate('/local-mode?auth=1')
+      navigate('/login')
       return
     }
 
     await signOut()
-    navigate('/local-mode')
+    navigate('/login')
   }
 
   return (
@@ -84,7 +83,7 @@ export function TopBar() {
             setAccountOpen(false)
           }}
         >
-          {signedIn ? <Cloud size={17} /> : <HardDrive size={17} />}
+          <Cloud size={17} />
           {label}
         </button>
         <Button size="icon" variant="secondary" aria-label="Settings" onClick={() => navigate('/settings')}>
@@ -196,7 +195,7 @@ export function TopBar() {
               <div>
                 <p className="text-lg font-bold text-bench-text">Switch to online mode?</p>
                 <p className="mt-2 text-sm leading-6 text-bench-muted">
-                  Online mode is optional. You can stay local or sign in from the Local Mode screen without losing anything on this device.
+                  BenchOS production uses sign-in for account access. Open Account to review sync status or sign out of this device.
                 </p>
               </div>
               <button
@@ -208,16 +207,16 @@ export function TopBar() {
               </button>
             </div>
             <div className="mt-5 flex justify-end gap-3">
-              <Button variant="ghost" onClick={() => setModePromptOpen(false)}>Stay Local</Button>
+              <Button variant="ghost" onClick={() => setModePromptOpen(false)}>Close</Button>
               <Button
                 variant="primary"
                 icon={<Cloud size={16} />}
                 onClick={() => {
                   setModePromptOpen(false)
-                  navigate(signedIn ? '/account' : '/local-mode?auth=1')
+                  navigate(signedIn ? '/account' : '/login')
                 }}
               >
-                Open Options
+                Open Account
               </Button>
             </div>
           </div>

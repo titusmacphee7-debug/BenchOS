@@ -1,4 +1,4 @@
-import { ArrowRight, HardDrive, ShieldCheck, SlidersHorizontal, UserRound } from 'lucide-react'
+import { ArrowRight, ShieldCheck, SlidersHorizontal, UserRound } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -9,7 +9,6 @@ import { completeAccountOnboarding } from '../../data/actions'
 import { useAuthSessionState, useToolBuyingPreferences, useUserProfile, useWorkshopProfile } from '../../data/hooks'
 import type { AccountOnboardingFormValues, BuyingPreferenceBudget, SkillLevel, WorkshopSpaceType, WorkshopType } from '../../data/schema'
 import { buyingPreferenceBudgets, skillLevels, workshopSpaceTypes } from '../../data/schema'
-import { enterLocalMode } from '../../lib/sync/localModeService'
 
 const projectInterestOptions = [
   'Woodworking',
@@ -39,23 +38,27 @@ export function AccountOnboardingPage() {
   const userProfile = useUserProfile()
   const workshop = useWorkshopProfile()
   const preferences = useToolBuyingPreferences()
-  const defaults = useMemo<AccountOnboardingFormValues>(() => ({
-    displayName: userProfile?.displayName && userProfile.displayName !== 'Local Mode' ? userProfile.displayName : 'Titus',
-    workshopName: workshop?.name ?? 'Local Workshop',
-    workshopType: workshop?.type ?? 'mixed',
-    skillLevel: workshop?.skillLevel ?? 'Beginner',
-    spaceType: workshop?.spaceType ?? 'garage',
-    projectInterests: workshop?.projectInterests?.length ? workshop.projectInterests : ['Home Improvement', 'Woodworking'],
-    safetyPriorities: workshop?.safetyPriorities?.length ? workshop.safetyPriorities : ['Eye protection', 'Dust protection'],
-    preferredBrands: preferences?.preferredBrands ?? [],
-    avoidedBrands: preferences?.avoidedBrands ?? [],
-    preferredBatteryPlatforms: preferences?.preferredBatteryPlatforms ?? [],
-    budgetTier: preferences?.budgetTier ?? 'balanced',
-    storageSensitivity: preferences?.storageSensitivity ?? 'medium',
-    noiseSensitivity: preferences?.noiseSensitivity ?? 'medium',
-    dustSensitivity: preferences?.dustSensitivity ?? 'medium',
-    preferCordless: preferences?.preferCordless ?? true,
-  }), [preferences, userProfile, workshop])
+  const defaults = useMemo<AccountOnboardingFormValues>(() => {
+    const profileName = userProfile?.displayName?.trim()
+    const workshopName = workshop?.name?.trim()
+    return {
+      displayName: profileName && profileName !== 'Local Mode' ? profileName : session?.email?.split('@')[0] ?? '',
+      workshopName: workshopName && workshopName !== 'Local Workshop' ? workshopName : '',
+      workshopType: workshop?.type ?? 'mixed',
+      skillLevel: workshop?.skillLevel ?? 'Beginner',
+      spaceType: workshop?.spaceType ?? 'garage',
+      projectInterests: workshop?.projectInterests?.length ? workshop.projectInterests : ['Home Improvement', 'Woodworking'],
+      safetyPriorities: workshop?.safetyPriorities?.length ? workshop.safetyPriorities : ['Eye protection', 'Dust protection'],
+      preferredBrands: preferences?.preferredBrands ?? [],
+      avoidedBrands: preferences?.avoidedBrands ?? [],
+      preferredBatteryPlatforms: preferences?.preferredBatteryPlatforms ?? [],
+      budgetTier: preferences?.budgetTier ?? 'balanced',
+      storageSensitivity: preferences?.storageSensitivity ?? 'medium',
+      noiseSensitivity: preferences?.noiseSensitivity ?? 'medium',
+      dustSensitivity: preferences?.dustSensitivity ?? 'medium',
+      preferCordless: preferences?.preferCordless ?? true,
+    }
+  }, [preferences, session?.email, userProfile, workshop])
   const [draft, setDraft] = useState<Partial<AccountOnboardingFormValues>>({})
   const values: AccountOnboardingFormValues = { ...defaults, ...draft }
   const [preferredBrandsText, setPreferredBrandsText] = useState<string>()
@@ -94,11 +97,6 @@ export function AccountOnboardingPage() {
     }
   }
 
-  async function continueLocalMode() {
-    await enterLocalMode()
-    navigate('/local-mode')
-  }
-
   return (
     <div className="mx-auto grid max-w-6xl gap-5">
       <section className="flex flex-wrap items-start justify-between gap-4">
@@ -108,7 +106,7 @@ export function AccountOnboardingPage() {
             These answers tune templates, diagnostics, compatibility warnings, and sync-ready workshop preferences.
           </p>
         </div>
-        <StatusPill label={signedIn ? 'Signed in' : 'Local Mode'} tone={signedIn ? 'green' : 'orange'} />
+        <StatusPill label={signedIn ? 'Signed in' : 'Sign-in required'} tone={signedIn ? 'green' : 'orange'} />
       </section>
 
       <form className="grid gap-5" onSubmit={(event) => void submit(event)}>
@@ -169,9 +167,6 @@ export function AccountOnboardingPage() {
         </Card>
 
         <div className="flex flex-wrap justify-end gap-3">
-          <Button type="button" variant="secondary" icon={<HardDrive size={16} />} onClick={() => void continueLocalMode()}>
-            Continue in Local Mode
-          </Button>
           <Button type="submit" variant="primary" icon={<ArrowRight size={16} />} disabled={working || !values.displayName.trim() || !values.workshopName.trim()}>
             Save and Continue
           </Button>

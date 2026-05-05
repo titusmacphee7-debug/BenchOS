@@ -1,13 +1,12 @@
 import { lazy, Suspense, type ReactNode } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { AppShell } from '../components/layout/AppShell'
-import { useAccountOnboardingStatus, useOnboardingStatus } from '../data/hooks'
+import { useAccountOnboardingStatus, useAuthGateState } from '../data/hooks'
 
 const AccountOnboardingPage = lazy(() =>
   import('../features/auth/AccountOnboardingPage').then((module) => ({ default: module.AccountOnboardingPage })),
 )
 const AccountPage = lazy(() => import('../features/auth/AuthPages').then((module) => ({ default: module.AccountPage })))
-const LocalModePage = lazy(() => import('../features/auth/AuthPages').then((module) => ({ default: module.LocalModePage })))
 const LoginPage = lazy(() => import('../features/auth/AuthPages').then((module) => ({ default: module.LoginPage })))
 const ResetPasswordPage = lazy(() => import('../features/auth/AuthPages').then((module) => ({ default: module.ResetPasswordPage })))
 const SignupPage = lazy(() => import('../features/auth/AuthPages').then((module) => ({ default: module.SignupPage })))
@@ -18,7 +17,6 @@ const GapAnalyzerPage = lazy(() =>
 const MaterialsPage = lazy(() => import('../features/materials/MaterialsPage').then((module) => ({ default: module.MaterialsPage })))
 const MasteryPage = lazy(() => import('../features/mastery/MasteryPage').then((module) => ({ default: module.MasteryPage })))
 const MyToolsPage = lazy(() => import('../features/my-tools/MyToolsPage').then((module) => ({ default: module.MyToolsPage })))
-const OnboardingPage = lazy(() => import('../features/onboarding/OnboardingPage').then((module) => ({ default: module.OnboardingPage })))
 const ProjectDetailPage = lazy(() =>
   import('../features/projects/ProjectDetailPage').then((module) => ({ default: module.ProjectDetailPage })),
 )
@@ -54,45 +52,67 @@ function RouteLoadingFallback() {
   )
 }
 
-export function AppRoutes() {
-  const onboarding = useOnboardingStatus()
-  const accountOnboarding = useAccountOnboardingStatus()
+function SessionLoadingFallback() {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-bench-bg p-6 text-bench-text">
+      <div className="panel-surface rounded-xl p-6 text-center">
+        <p className="text-lg font-semibold">Checking secure session...</p>
+        <p className="mt-2 text-sm text-bench-muted">BenchOS will send you to sign in if this device has no active account session.</p>
+      </div>
+    </div>
+  )
+}
 
-  if (!onboarding.ready || !accountOnboarding.ready) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-bench-bg p-6 text-bench-text">
-        <div className="panel-surface rounded-xl p-6 text-center">
-          <p className="text-lg font-semibold">Checking workshop setup...</p>
-          <p className="mt-2 text-sm text-bench-muted">Preparing your local-first workspace.</p>
+function PublicAuthFrame({ children }: { children: ReactNode }) {
+  return (
+    <div className="min-h-screen bg-bench-bg px-5 py-8 text-bench-text lg:px-8">
+      <div className="mx-auto mb-8 flex max-w-5xl items-center gap-3">
+        <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-bench-orange/35 bg-bench-orange/15 text-lg font-black text-bench-orange">
+          B
+        </span>
+        <div>
+          <p className="text-lg font-black tracking-wide text-bench-text">BenchOS</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-bench-muted">Workshop command center</p>
         </div>
       </div>
-    )
-  }
+      {children}
+    </div>
+  )
+}
 
-  if (!onboarding.complete) {
+function publicAuthElement(element: ReactNode) {
+  return routeElement(<PublicAuthFrame>{element}</PublicAuthFrame>)
+}
+
+export function AppRoutes() {
+  const authGate = useAuthGateState()
+  const accountOnboarding = useAccountOnboardingStatus()
+  const signedIn = authGate.session?.status === 'signed_in'
+
+  if (!authGate.ready) return <SessionLoadingFallback />
+
+  if (!signedIn) {
     return (
       <Routes>
-        <Route path="/onboarding" element={routeElement(<OnboardingPage />)} />
-        <Route element={<AppShell />}>
-          <Route path="/login" element={routeElement(<LoginPage />)} />
-          <Route path="/signup" element={routeElement(<SignupPage />)} />
-          <Route path="/reset-password" element={routeElement(<ResetPasswordPage />)} />
-          <Route path="/account" element={routeElement(<AccountPage />)} />
-          <Route path="/account-onboarding" element={routeElement(<AccountOnboardingPage />)} />
-          <Route path="/local-mode" element={routeElement(<LocalModePage />)} />
-        </Route>
-        <Route path="*" element={<Navigate to="/onboarding" replace />} />
+        <Route path="/login" element={publicAuthElement(<LoginPage />)} />
+        <Route path="/signup" element={publicAuthElement(<SignupPage />)} />
+        <Route path="/reset-password" element={publicAuthElement(<ResetPasswordPage />)} />
+        <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     )
   }
+
+  if (!accountOnboarding.ready) return <SessionLoadingFallback />
 
   if (!accountOnboarding.complete) {
     return (
       <Routes>
         <Route element={<AppShell />}>
           <Route path="/account-onboarding" element={routeElement(<AccountOnboardingPage />)} />
-          <Route path="/account" element={<Navigate to="/account-onboarding" replace />} />
-          <Route path="/local-mode" element={routeElement(<LocalModePage />)} />
+          <Route path="/account" element={routeElement(<AccountPage />)} />
+          <Route path="/login" element={<Navigate to="/account-onboarding" replace />} />
+          <Route path="/signup" element={<Navigate to="/account-onboarding" replace />} />
+          <Route path="/reset-password" element={<Navigate to="/account-onboarding" replace />} />
           <Route path="*" element={<Navigate to="/account-onboarding" replace />} />
         </Route>
       </Routes>
@@ -101,7 +121,6 @@ export function AppRoutes() {
 
   return (
     <Routes>
-      <Route path="/onboarding" element={<Navigate to="/" replace />} />
       <Route element={<AppShell />}>
         <Route index element={routeElement(<DashboardPage />)} />
         <Route path="tool-library" element={routeElement(<ToolLibraryPage />)} />
@@ -118,12 +137,13 @@ export function AppRoutes() {
         <Route path="mastery" element={routeElement(<MasteryPage />)} />
         <Route path="settings" element={routeElement(<SettingsPage />)} />
         <Route path="settings/buying-preferences" element={routeElement(<BuyingPreferencesPage />)} />
-        <Route path="login" element={routeElement(<LoginPage />)} />
-        <Route path="signup" element={routeElement(<SignupPage />)} />
-        <Route path="reset-password" element={routeElement(<ResetPasswordPage />)} />
+        <Route path="login" element={<Navigate to="/" replace />} />
+        <Route path="signup" element={<Navigate to="/" replace />} />
+        <Route path="reset-password" element={<Navigate to="/" replace />} />
         <Route path="account" element={routeElement(<AccountPage />)} />
         <Route path="account-onboarding" element={routeElement(<AccountOnboardingPage />)} />
-        <Route path="local-mode" element={routeElement(<LocalModePage />)} />
+        <Route path="local-mode" element={<Navigate to="/" replace />} />
+        <Route path="onboarding" element={<Navigate to="/" replace />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>

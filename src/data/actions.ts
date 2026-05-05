@@ -581,9 +581,12 @@ export async function completeAccountOnboarding(values: AccountOnboardingFormVal
   const existingWorkshop = await db.workshopProfiles.get('local-workshop')
   const existingPreferences = await db.toolBuyingPreferences.get('default')
   const signedIn = session?.status === 'signed_in'
-  const syncMeta = signedIn ? pendingSyncMeta() : { syncStatus: 'local' as const, localOnly: true }
-  const displayName = values.displayName.trim() || 'Titus'
-  const workshopName = values.workshopName.trim() || 'Local Workshop'
+  if (!signedIn) throw new Error('Sign in before completing account setup.')
+  const syncMeta = pendingSyncMeta()
+  const displayName = values.displayName.trim()
+  const workshopName = values.workshopName.trim()
+  if (!displayName) throw new Error('Display name is required.')
+  if (!workshopName) throw new Error('Workshop name is required.')
 
   const userProfile: UserProfile = {
     ...(existingUser ?? {

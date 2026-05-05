@@ -102,7 +102,7 @@ describe('Phase 4 auth and sync', () => {
       updatedAt: '',
     })
     await completeAccountOnboarding({
-      displayName: 'Titus',
+      displayName: 'Owner',
       workshopName: 'Cloud Bench',
       workshopType: 'woodworking',
       skillLevel: 'Beginner',

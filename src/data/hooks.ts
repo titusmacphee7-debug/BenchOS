@@ -11,6 +11,7 @@ import type {
   ProjectTemplate,
   ProjectTemplateRequirement,
   RecentActivityItem,
+  AuthSessionState,
   ToolAccessory,
   ToolBuyingPreferences,
   ToolCatalogLibraryItem,
@@ -30,7 +31,7 @@ export function useSeedDatabase() {
   useEffect(() => {
     let active = true
     db.settings.get('seedVersion')
-      .then((existingSeed) => ensureDatabaseSeeded(db, { markNeedsOnboarding: !existingSeed }))
+      .then(() => ensureDatabaseSeeded(db, { includeSampleData: false }))
       .then(() => {
         if (active) setReady(true)
       })
@@ -175,15 +176,26 @@ export function useAuthSessionState() {
   return useLiveQuery(() => db.authSessionStates.get('local-session'), [], undefined)
 }
 
+export function useAuthGateState() {
+  return useLiveQuery(
+    async () => ({
+      ready: true,
+      session: (await db.authSessionStates.get('local-session')) ?? null,
+    }),
+    [],
+    { ready: false, session: null as AuthSessionState | null },
+  )
+}
+
 export function useAccountOnboardingStatus() {
   const state = useLiveQuery(async () => ({
     session: await db.authSessionStates.get('local-session'),
     userProfile: await db.userProfiles.get('local-user'),
   }), [], undefined)
 
-  if (!state) return { ready: false, complete: true, signedIn: false }
+  if (!state) return { ready: false, complete: false, signedIn: false }
   const signedIn = state.session?.status === 'signed_in'
-  const complete = !signedIn || Boolean(state.userProfile?.accountOnboardingCompletedAt)
+  const complete = signedIn && Boolean(state.userProfile?.accountOnboardingCompletedAt)
   return { ready: true, complete, signedIn }
 }
 

@@ -3,7 +3,7 @@
 This guide walks through deploying BenchOS to Netlify at:
 
 ```text
-app.benchos.com
+appbenchos.com
 ```
 
 BenchOS is a Vite + React single-page app. Netlify should build it with `npm run build` and publish the generated `dist` folder.
@@ -34,7 +34,7 @@ The repo includes `netlify.toml`, so Netlify should also detect these build sett
 
 ## B. Add Environment Variables In Netlify
 
-BenchOS works in Local Mode without Supabase. If you want optional Supabase Auth and sync in the deployed app, add these variables in Netlify.
+BenchOS production requires Supabase Auth before the dashboard and workshop pages open. Add these public frontend variables in Netlify.
 
 In Netlify:
 
@@ -68,42 +68,44 @@ In Netlify:
 4. Enter:
 
 ```text
-app.benchos.com
+appbenchos.com
 ```
 
-5. If this is the main app URL, make `app.benchos.com` the primary domain.
+5. If this is the main app URL, make `appbenchos.com` the primary domain.
 
 ## D. DNS Setup
 
-DNS is what points `app.benchos.com` to your Netlify site.
+DNS is what points `appbenchos.com` to your Netlify site.
 
 ### Case 1: Domain Uses An External DNS Provider
 
 If your DNS is managed outside Netlify, create this DNS record with your DNS provider:
 
 ```text
+Type: A
+Host/Name: @
+Value/Target: 75.2.60.5
+```
+
+Optional `www` redirect/alias:
+
+```text
 Type: CNAME
-Host/Name: app
+Host/Name: www
 Value/Target: your actual Netlify site subdomain
 ```
 
-The target should look similar to:
-
-```text
-your-site-name.netlify.app
-```
-
-Do not use that placeholder exactly. Copy the real Netlify subdomain from your Netlify site dashboard after the site is created.
+The `www` target should look similar to `your-site-name.netlify.app`, but do not use that placeholder exactly. Copy the real Netlify subdomain from your Netlify site dashboard.
 
 ### Case 2: Domain Uses Netlify DNS
 
 If you move DNS management to Netlify, follow Netlify's instructions for changing your domain's name servers.
 
-After Netlify DNS is active, Netlify should manage the needed DNS records for `app.benchos.com`.
+After Netlify DNS is active, Netlify should manage the needed DNS records for `appbenchos.com`.
 
 ## E. HTTPS
 
-After DNS points to Netlify, Netlify should automatically provision HTTPS for `app.benchos.com`.
+After DNS points to Netlify, Netlify should automatically provision HTTPS for `appbenchos.com`.
 
 DNS and HTTPS can take time to activate. It is normal for the custom domain or certificate to show as pending for a while after setup.
 
@@ -111,7 +113,7 @@ DNS and HTTPS can take time to activate. It is normal for the custom domain or c
 
 After Netlify says the deploy is live, test:
 
-- `app.benchos.com` loads.
+- `appbenchos.com` loads.
 - Login page works.
 - Supabase connection works if Supabase variables were added.
 - Refreshing app routes works, such as `/tool-library` or `/projects`.

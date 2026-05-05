@@ -4,8 +4,8 @@ import { db } from './db'
 import type { AccountOnboardingFormValues } from './schema'
 
 const onboardingValues: AccountOnboardingFormValues = {
-  displayName: 'Titus',
-  workshopName: 'Titus Workshop',
+  displayName: 'Owner',
+  workshopName: 'Owner Workshop',
   workshopType: 'woodworking',
   skillLevel: 'Beginner',
   spaceType: 'apartment',
@@ -33,7 +33,7 @@ describe('account onboarding', () => {
       status: 'signed_in',
       provider: 'supabase',
       userId: 'user-1',
-      email: 'titus@example.com',
+      email: 'owner@example.com',
       cloudBackupEnabled: true,
       cloudSyncEnabled: true,
       updatedAt: '',
@@ -45,10 +45,10 @@ describe('account onboarding', () => {
     const workshop = await db.workshopProfiles.get('local-workshop')
     const preferences = await db.toolBuyingPreferences.get('default')
 
-    expect(userProfile?.displayName).toBe('Titus')
+    expect(userProfile?.displayName).toBe('Owner')
     expect(userProfile?.accountOnboardingCompletedAt).toBeTruthy()
     expect(userProfile?.syncStatus).toBe('pending')
-    expect(workshop?.name).toBe('Titus Workshop')
+    expect(workshop?.name).toBe('Owner Workshop')
     expect(workshop?.type).toBe('woodworking')
     expect(workshop?.spaceType).toBe('apartment')
     expect(workshop?.projectInterests).toContain('Storage')

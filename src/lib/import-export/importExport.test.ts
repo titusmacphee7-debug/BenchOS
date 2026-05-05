@@ -8,7 +8,7 @@ describe('BenchOS import/export', () => {
   it('exports every table with backup metadata', async () => {
     const database = new BenchOsDatabase(`benchos-export-${crypto.randomUUID()}`)
     try {
-      await ensureDatabaseSeeded(database)
+      await ensureDatabaseSeeded(database, { includeSampleData: true })
       const backup = await exportBenchOsBackup(database)
 
       expect(backup.appName).toBe('BenchOS')
@@ -34,7 +34,7 @@ describe('BenchOS import/export', () => {
   it('does not clear existing data when import validation fails', async () => {
     const database = new BenchOsDatabase(`benchos-invalid-import-${crypto.randomUUID()}`)
     try {
-      await ensureDatabaseSeeded(database)
+      await ensureDatabaseSeeded(database, { includeSampleData: true })
       const before = await database.userTools.count()
 
       await expect(importBenchOsBackup({ nope: true }, database)).rejects.toThrow('valid BenchOS backup')
@@ -50,7 +50,7 @@ describe('BenchOS import/export', () => {
     const source = new BenchOsDatabase(`benchos-source-${crypto.randomUUID()}`)
     const target = new BenchOsDatabase(`benchos-target-${crypto.randomUUID()}`)
     try {
-      await ensureDatabaseSeeded(source)
+      await ensureDatabaseSeeded(source, { includeSampleData: true })
       const backup = await exportBenchOsBackup(source)
       const result = await importBenchOsBackup(backup, target)
 
@@ -82,7 +82,7 @@ describe('BenchOS import/export', () => {
   it('start empty preserves library tables and clears workshop tables', async () => {
     const database = new BenchOsDatabase(`benchos-empty-${crypto.randomUUID()}`)
     try {
-      await ensureDatabaseSeeded(database)
+      await ensureDatabaseSeeded(database, { includeSampleData: true })
       await clearWorkshopData(database)
 
       expect(await database.toolTypes.count()).toBeGreaterThanOrEqual(170)

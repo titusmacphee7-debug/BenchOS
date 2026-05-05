@@ -9,7 +9,7 @@ import { starterProjectActivity, starterProjectRequirements, starterProjects, st
 import { buildStarterToolLibrary } from './starterToolLibrary'
 
 export async function ensureDatabaseSeeded(database: BenchOsDatabase, options: { includeSampleData?: boolean; markNeedsOnboarding?: boolean; force?: boolean } = {}) {
-  const includeSampleData = options.includeSampleData ?? true
+  const includeSampleData = options.includeSampleData ?? false
   const currentSeed = await database.settings.get('seedVersion')
   if (!options.force && currentSeed?.value === SEED_VERSION) return false
 
@@ -80,15 +80,15 @@ export async function ensureDatabaseSeeded(database: BenchOsDatabase, options: {
         await database.authSessionStates.put(defaultAuthSessionState)
       }
 
-      if ((await database.userProfiles.count()) === 0) {
+      if (includeSampleData && (await database.userProfiles.count()) === 0) {
         await database.userProfiles.put(defaultUserProfile)
       }
 
-      if ((await database.workshopProfiles.count()) === 0) {
+      if (includeSampleData && (await database.workshopProfiles.count()) === 0) {
         await database.workshopProfiles.put(defaultWorkshopProfile)
       }
 
-      if ((await database.toolBuyingPreferences.count()) === 0) {
+      if (includeSampleData && (await database.toolBuyingPreferences.count()) === 0) {
         await database.toolBuyingPreferences.put(defaultToolBuyingPreferences)
       }
 
@@ -124,7 +124,7 @@ export async function ensureDatabaseSeeded(database: BenchOsDatabase, options: {
         await database.masteryGuides.bulkPut(starterMasteryGuides)
       }
 
-      if ((await database.masteryProgress.count()) === 0) {
+      if (includeSampleData && (await database.masteryProgress.count()) === 0) {
         await database.masteryProgress.bulkPut(starterMasteryProgress)
       }
 

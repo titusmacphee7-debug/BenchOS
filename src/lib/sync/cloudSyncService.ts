@@ -42,7 +42,7 @@ export type CloudSyncSummary = {
 
 function clientOrThrow(client?: SupabaseClient) {
   if (!client && !isSupabaseConfigured()) {
-    throw new Error('Supabase is not configured. Local Mode is still available.')
+    throw new Error('Supabase is not configured. Add the public Supabase env vars before using cloud sync.')
   }
   return client ?? getSupabaseClient()
 }

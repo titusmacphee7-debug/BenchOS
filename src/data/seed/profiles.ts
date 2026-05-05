@@ -4,7 +4,7 @@ const today = '2026-05-03T00:00:00.000Z'
 
 export const defaultAuthSessionState: AuthSessionState = {
   id: 'local-session',
-  status: 'local',
+  status: 'signed_out',
   provider: 'supabase',
   cloudBackupEnabled: false,
   cloudSyncEnabled: false,
@@ -15,7 +15,7 @@ export const defaultAuthSessionState: AuthSessionState = {
 
 export const defaultUserProfile: UserProfile = {
   id: 'local-user',
-  displayName: 'Local Mode',
+  displayName: 'Sample Builder',
   accountOnboardingVersion: 1,
   localOnly: true,
   syncStatus: 'local',
@@ -25,7 +25,7 @@ export const defaultUserProfile: UserProfile = {
 
 export const defaultWorkshopProfile: WorkshopProfile = {
   id: 'local-workshop',
-  name: 'Local Workshop',
+  name: 'Sample Workshop',
   type: 'mixed',
   skillLevel: 'Beginner',
   spaceType: 'garage',

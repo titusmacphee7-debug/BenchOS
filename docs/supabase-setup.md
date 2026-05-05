@@ -1,6 +1,6 @@
 # BenchOS Supabase Setup
 
-BenchOS stays local-first. Supabase is optional and only enables Auth plus row-level sync for user/workshop data.
+BenchOS production requires Supabase Auth for login. The existing Supabase sync layer still covers user/workshop data while Netlify Database is prepared in a later implementation slice.
 
 ## 1. Create Project
 
@@ -55,4 +55,4 @@ npm run dev -- --host 127.0.0.1 --port 5173
 
 Then create an account. After sign-up/sign-in, BenchOS should route to account onboarding. Completing onboarding stores profile, workshop, safety, brand, platform, and sensitivity answers locally, then syncs them through `workshop_records` when Supabase is configured.
 
-If Supabase env vars are missing, BenchOS remains fully usable in Local Mode and auth/sync controls explain that online mode is unavailable.
+If Supabase env vars are missing, BenchOS can still build, but production sign-in is unavailable and protected app pages remain behind the login screen.

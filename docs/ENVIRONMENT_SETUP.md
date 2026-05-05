@@ -93,9 +93,9 @@ npm run preview -- --host 127.0.0.1 --port 4173
 
 ## Environment Variables
 
-BenchOS works in Local Mode without Supabase env vars.
+BenchOS production requires Supabase env vars for sign-in. Without them, local development can start, but protected app pages stay behind the login screen.
 
-Optional Supabase Auth and cloud sync use these env names:
+Supabase Auth and the current cloud sync layer use these env names:
 
 ```text
 VITE_SUPABASE_URL
@@ -150,7 +150,7 @@ Prepared worktrees:
 - `C:\Users\slaye\Documents\Codex\BenchOS-cleanup`
 - `C:\Users\slaye\Documents\Codex\BenchOS-ui-polish`
 
-Each worktree still needs its own `.env.local` only if you want Supabase Auth or cloud sync there. BenchOS Local Mode works without Supabase env vars.
+Each worktree that needs to open protected BenchOS pages should have its own `.env.local` with the Supabase public env values.
 
 ## Codex App Local Environment Setup
 
