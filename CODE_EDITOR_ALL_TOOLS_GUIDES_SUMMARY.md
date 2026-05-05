@@ -6,6 +6,8 @@ Implemented the scalable foundation for dedicated Tool Mastery guide pages acros
 
 BenchOS now has a catalog guide route system that can map every seeded catalog item to a unique guide slug while preserving tool-type guide compatibility.
 
+Version bumped to `v0.16` for the GitHub/Netlify push.
+
 ## Files Changed
 
 - `src/lib/guides/allToolsGuideSystem.ts`
@@ -53,6 +55,9 @@ BenchOS now has a catalog guide route system that can map every seeded catalog i
 
 - `docs/ALL_TOOLS_GUIDE_QA.md`
   - Added guide inheritance, content QA, safety review, missing data, and performance rules.
+
+- `package.json`, `package-lock.json`, `src/lib/version.ts`, and `VERSION_HISTORY.md`
+  - Updated BenchOS from `v0.15` to `v0.16` for this pushed release.
 
 ## Catalog Mapping
 

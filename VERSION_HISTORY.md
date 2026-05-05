@@ -11,10 +11,27 @@
 ## Current Version
 
 ```text
-BenchOS v0.14
+BenchOS v0.16
 ```
 
 ## History
+
+### v0.16 - All-Tools Guide Foundation
+
+- Added a scalable guide route system so all 1,641 seeded Tool Library catalog items can resolve to dedicated guide pages.
+- Added catalog guide slug generation, collision handling, and content status metadata.
+- Preserved tool-type guide compatibility through `/tool-guides/types/:toolTypeId`.
+- Added catalog model context panels with honest missing-spec/source/status copy.
+- Updated Tool Library, Tool Mastery, My Tools, and Wishlist guide links for the new route strategy.
+- Added guide QA docs and tests for all catalog item route mappings.
+
+### v0.15 - Performance And Loading Pass
+
+- Reduced the startup `index` bundle by moving broad data hooks out of the route/auth shell.
+- Deferred local catalog seed warmup until after the secure app shell is ready.
+- Added a lightweight hammer loading reveal with reduced-motion support.
+- Added route loading/error fallbacks and conservative Netlify/PWA caching headers.
+- Added performance budget and implementation docs.
 
 ### v0.14 - Tool Mastery Command Center Redesign
 
