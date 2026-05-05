@@ -11,10 +11,17 @@
 ## Current Version
 
 ```text
-BenchOS v0.13
+BenchOS v0.14
 ```
 
 ## History
+
+### v0.14 - Tool Mastery Command Center Redesign
+
+- Redesigned Tool Mastery into a BenchXP command-center page with overall familiarity, category mastery, owned-tool familiarity, next-skill guidance, score explanation, practice prompts, and honest empty states.
+- Upgraded Tool Guide detail pages with stronger guide hero, owned/not-owned state, quick reference, readiness connection, and skill dimension bars.
+- Added Tool Mastery redesign plan, task, and implementation summary docs.
+- Split production vendor chunks so the Vite build no longer emits the large chunk warning.
 
 ### v0.13 - Stale Local Demo Cleanup
 
