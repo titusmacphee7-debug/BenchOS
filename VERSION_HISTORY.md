@@ -11,10 +11,17 @@
 ## Current Version
 
 ```text
-BenchOS v0.11
+BenchOS v0.12
 ```
 
 ## History
+
+### v0.12 - BenchXP Button Interaction Fix
+
+- Made Tool Mastery guide buttons open the full guide experience instead of only selecting the current row.
+- Replaced the passive search-side tab button with a visible result count.
+- Moved the next BenchXP action higher in the guide detail panel.
+- Added visible success feedback for guide confidence, practice, mistake, maintenance, and favorite actions.
 
 ### v0.11 - Server-Backed BenchXP Upgrade
 

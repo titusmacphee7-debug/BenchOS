@@ -1,6 +1,6 @@
 import { BookOpen, CheckCircle2, Lock, Play, Search, Star, TrendingUp, Wrench } from 'lucide-react'
 import { useMemo, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Button } from '../../components/ui/Button'
 import { Card, CardTitle } from '../../components/ui/Card'
 import { IconTile } from '../../components/ui/IconTile'
@@ -17,6 +17,7 @@ import { getFamiliarityLabel } from '../../lib/guides/toolMasteryContent'
 const tabs = ['All Tools', 'Owned Tools', 'In Progress', 'Completed Guides']
 
 export function MasteryPage() {
+  const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const guides = useMasteryGuides()
   const tools = useActiveUserTools()
@@ -27,6 +28,8 @@ export function MasteryPage() {
   const [activeTab, setActiveTab] = useState('All Tools')
   const [query, setQuery] = useState('')
   const [selectedGuideId, setSelectedGuideId] = useState<string>()
+  const [savingGuideId, setSavingGuideId] = useState<string>()
+  const [notice, setNotice] = useState('')
   const requestedToolTypeId = searchParams.get('tool')
 
   const rows = useMemo(() => guides
@@ -51,6 +54,23 @@ export function MasteryPage() {
   const inProgress = xpSummary.inProgressGuides
   const ownedGuideCount = guides.filter((guide) => tools.some((tool) => tool.toolTypeId === guide.toolTypeId)).length
 
+  async function openGuide(guide: MasteryGuide, guideProgress?: BenchXpProgress, userToolId?: string) {
+    setSelectedGuideId(guide.id)
+    setNotice('')
+    setSavingGuideId(guide.id)
+    try {
+      if (!guideProgress) {
+        await benchXp.startGuide({ guideId: guide.id, toolTypeId: guide.toolTypeId, userToolId })
+      }
+      setNotice(`${guide.toolName} guide is ready.`)
+    } catch {
+      setNotice(`${guide.toolName} guide opened. BenchXP progress will sync when the server is available.`)
+    } finally {
+      setSavingGuideId(undefined)
+      navigate(`/tool-guides/${guide.toolTypeId}`)
+    }
+  }
+
   return (
     <div>
       <PageHeader
@@ -72,7 +92,7 @@ export function MasteryPage() {
                   onChange={(event) => setQuery(event.target.value)}
                 />
               </label>
-              <Button>{activeTab}</Button>
+              <StatusPill label={`${rows.length} shown`} tone="muted" />
             </div>
           </Card>
 
@@ -87,6 +107,12 @@ export function MasteryPage() {
             <Card className="border-bench-yellow/35 bg-bench-yellow/10">
               <p className="text-sm font-semibold text-bench-yellow">BenchXP server progress is unavailable right now.</p>
               <p className="mt-1 text-sm text-bench-muted">{benchXp.error}</p>
+            </Card>
+          )}
+
+          {notice && (
+            <Card className="border-bench-green/35 bg-bench-green/10">
+              <p className="text-sm font-semibold text-bench-green">{notice}</p>
             </Card>
           )}
 
@@ -132,13 +158,10 @@ export function MasteryPage() {
                     <Button
                       variant={guideProgress ? 'secondary' : 'outline'}
                       icon={guideProgress ? <Play size={16} /> : <Lock size={16} />}
-                      disabled={benchXp.loading}
-                      onClick={() => {
-                        setSelectedGuideId(guide.id)
-                        if (!guideProgress) void benchXp.startGuide({ guideId: guide.id, toolTypeId: guide.toolTypeId, userToolId: ownedTool?.id })
-                      }}
+                      disabled={benchXp.loading || savingGuideId === guide.id}
+                      onClick={() => void openGuide(guide, guideProgress, ownedTool?.id)}
                     >
-                      {guideProgress?.status === 'completed' ? 'Review' : guideProgress ? 'Continue' : 'Start Guide'}
+                      {savingGuideId === guide.id ? 'Opening...' : guideProgress?.status === 'completed' ? 'Review Guide' : guideProgress ? 'Open Guide' : 'Start Guide'}
                     </Button>
                   </div>
                 </Card>
@@ -173,6 +196,7 @@ export function MasteryPage() {
               guide={selected.guide}
               progress={selected.progress}
               disabled={benchXp.loading}
+              onOpenGuide={() => void openGuide(selected.guide, selected.progress, selected.ownedTool?.id)}
               onCompleteStep={(step) => benchXp.completeStep({
                 guideId: selected.guide.id,
                 toolTypeId: selected.guide.toolTypeId,
@@ -209,11 +233,13 @@ function GuideDetail({
   guide,
   progress,
   disabled,
+  onOpenGuide,
   onCompleteStep,
 }: {
   guide: MasteryGuide
   progress?: BenchXpProgress
   disabled?: boolean
+  onOpenGuide: () => void
   onCompleteStep: (step: MasteryGuideStep) => Promise<unknown>
 }) {
   const completed = new Set(progress?.completedStepIds ?? [])
@@ -221,8 +247,22 @@ function GuideDetail({
 
   return (
     <Card>
-      <CardTitle title={guide.toolName} />
+      <CardTitle title={guide.toolName} action={<Button size="sm" variant="outline" icon={<BookOpen size={15} />} disabled={disabled} onClick={onOpenGuide}>Open Full Guide</Button>} />
       <p className="text-sm text-bench-muted">{guide.summary}</p>
+      {nextStep ? (
+        <div className="mt-4 rounded-xl border border-bench-orange/30 bg-bench-orange/10 p-3">
+          <p className="text-xs font-semibold uppercase text-bench-orange">Next BenchXP action</p>
+          <p className="mt-1 text-sm font-semibold text-bench-text">{nextStep.title}</p>
+          <p className="mt-1 text-xs leading-5 text-bench-muted">{nextStep.description}</p>
+          <Button className="mt-3 w-full" variant="primary" icon={<CheckCircle2 size={16} />} disabled={disabled} onClick={() => void onCompleteStep(nextStep)}>
+            Complete Next Step
+          </Button>
+        </div>
+      ) : (
+        <div className="mt-4 rounded-xl border border-bench-green/30 bg-bench-green/10 p-3 text-sm font-semibold text-bench-green">
+          Guide completed. Use the full guide page for practice, confidence, mistakes, and maintenance evidence.
+        </div>
+      )}
       <div className="mt-4 space-y-3">
         {guide.steps.map((step) => (
           <div key={step.id} className="rounded-lg border border-bench-border bg-white/[0.025] p-3">
@@ -236,13 +276,6 @@ function GuideDetail({
           </div>
         ))}
       </div>
-      {nextStep ? (
-        <Button className="mt-5 w-full" variant="primary" icon={<CheckCircle2 size={16} />} disabled={disabled} onClick={() => void onCompleteStep(nextStep)}>
-          Complete Next Step
-        </Button>
-      ) : (
-        <Button className="mt-5 w-full" variant="outline" icon={<CheckCircle2 size={16} />}>Completed Guide</Button>
-      )}
     </Card>
   )
 }

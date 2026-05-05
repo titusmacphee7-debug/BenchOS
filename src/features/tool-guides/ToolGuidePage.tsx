@@ -71,6 +71,7 @@ export function ToolGuidePage() {
   const masteryGuides = useMasteryGuides()
   const benchXp = useBenchXp()
   const [depthMode, setDepthMode] = useState<GuideDepthMode>('quick')
+  const [actionNotice, setActionNotice] = useState('')
 
   if (!toolTypeId) return <Navigate to="/tool-library" replace />
 
@@ -88,6 +89,16 @@ export function ToolGuidePage() {
   const isFavorite = guideId ? benchXp.state.favoriteGuideIds.includes(guideId) : false
   const guideEvidence = progress ? benchXp.state.evidence.filter((item) => item.progressId === progress.id || item.guideId === progress.guideId) : []
   const recommendations = structuredGuide ? benchXp.state.recommendations.filter((item) => item.toolTypeId === structuredGuide.toolTypeId).slice(0, 3) : []
+
+  async function runGuideAction(successMessage: string, action: () => Promise<unknown>) {
+    setActionNotice('')
+    try {
+      await action()
+      setActionNotice(successMessage)
+    } catch {
+      // useBenchXp already exposes the safe error copy in the guide panel.
+    }
+  }
 
   return (
     <div className="grid gap-5">
@@ -120,6 +131,12 @@ export function ToolGuidePage() {
       </section>
 
       <DepthSelector value={depthMode} onChange={setDepthMode} disabled={!structuredGuide} />
+
+      {actionNotice && (
+        <Card className="border-bench-green/35 bg-bench-green/10">
+          <p className="text-sm font-semibold text-bench-green">{actionNotice}</p>
+        </Card>
+      )}
 
       <div className="grid gap-5 xl:grid-cols-[280px_1fr_320px]">
         <aside className="space-y-4 xl:sticky xl:top-5 xl:h-fit">
@@ -162,9 +179,9 @@ export function ToolGuidePage() {
               recommendations={recommendations}
               loading={benchXp.loading}
               error={benchXp.error}
-              onConfidence={(confidence) => benchXp.logConfidence({ guideId, toolTypeId: structuredGuide.toolTypeId, confidence })}
+              onConfidence={(confidence) => runGuideAction('Confidence check-in saved.', () => benchXp.logConfidence({ guideId, toolTypeId: structuredGuide.toolTypeId, confidence }))}
               isFavorite={isFavorite}
-              onToggleFavorite={() => benchXp.toggleFavoriteGuide({ guideId, toolTypeId: structuredGuide.toolTypeId, favorite: !isFavorite })}
+              onToggleFavorite={() => runGuideAction(isFavorite ? 'Guide removed from favorites.' : 'Guide added to favorites.', () => benchXp.toggleFavoriteGuide({ guideId, toolTypeId: structuredGuide.toolTypeId, favorite: !isFavorite }))}
             />
           )}
           {structuredGuide && guideId && (
@@ -173,7 +190,7 @@ export function ToolGuidePage() {
               disabled={benchXp.loading}
               onLogPractice={(taskIndex) => {
                 const task = structuredGuide.practiceTasks[taskIndex]
-                return benchXp.logPractice({
+                return runGuideAction('Practice evidence saved.', () => benchXp.logPractice({
                   guideId,
                   toolTypeId: structuredGuide.toolTypeId,
                   taskId: `${structuredGuide.toolTypeId}-practice-${taskIndex + 1}`,
@@ -182,10 +199,10 @@ export function ToolGuidePage() {
                   xp: task.xp,
                   result: task.expectedResult,
                   totalStepCount: sections.length,
-                })
+                }))
               }}
-              onLogMistake={(mistakeKey) => benchXp.logMistake({ guideId, toolTypeId: structuredGuide.toolTypeId, mistakeKey })}
-              onLogMaintenance={() => benchXp.logMaintenance({ guideId, toolTypeId: structuredGuide.toolTypeId, maintenanceKey: 'guide-maintenance-review' })}
+              onLogMistake={(mistakeKey) => runGuideAction('Mistake pattern saved.', () => benchXp.logMistake({ guideId, toolTypeId: structuredGuide.toolTypeId, mistakeKey }))}
+              onLogMaintenance={() => runGuideAction('Maintenance evidence saved.', () => benchXp.logMaintenance({ guideId, toolTypeId: structuredGuide.toolTypeId, maintenanceKey: 'guide-maintenance-review' }))}
             />
           )}
           <Card>
@@ -340,7 +357,7 @@ function BenchXpPanel({
         </div>
       </div>
       <Button className="mt-4 w-full" type="button" variant={isFavorite ? 'outline' : 'secondary'} disabled={loading} icon={<Star size={16} />} onClick={() => void onToggleFavorite()}>
-        {isFavorite ? 'Favorite guide' : 'Add to favorites'}
+        {isFavorite ? 'Remove favorite' : 'Add to favorites'}
       </Button>
     </Card>
   )
