@@ -4,6 +4,7 @@
 
 Implemented the first BenchOS performance and loading pass:
 
+- Bumped BenchOS from `0.0.14` to `0.0.15` for this push.
 - Removed broad startup imports from the route/auth shell.
 - Stopped app boot from blocking on local Dexie catalog seeding.
 - Deferred local seed/catalog warmup until after Auth0/session boot.
@@ -56,6 +57,9 @@ Implemented the first BenchOS performance and loading pass:
 
 - `docs/PERFORMANCE_BUDGET.md`
   - Added performance budget and verification checklist.
+
+- `package.json` and `package-lock.json`
+  - Bumped the BenchOS version to `0.0.15` for the GitHub/Netlify push.
 
 ## Bundle Observations
 
