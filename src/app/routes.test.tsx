@@ -45,6 +45,19 @@ describe('mandatory auth routing', () => {
     expect(await screen.findByRole('button', { name: 'Continue with Auth0' })).toBeInTheDocument()
   })
 
+  it('keeps the account deleted page public for signed-out users', async () => {
+    await putSignedOutSession()
+
+    render(
+      <MemoryRouter initialEntries={['/account-deleted']}>
+        <AppRoutes />
+      </MemoryRouter>,
+    )
+
+    expect(await screen.findByRole('heading', { name: 'Your BenchOS account has been deleted.' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Return to sign in' })).toBeInTheDocument()
+  })
+
   it('disables the old Local Mode route in production routing', async () => {
     await putSignedOutSession()
 

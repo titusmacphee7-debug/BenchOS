@@ -10,7 +10,7 @@ export type BenchAuth0ContextValue = {
   login: () => Promise<void>
   signup: () => Promise<void>
   getAccessToken: () => Promise<string>
-  logout: () => void
+  logout: (returnToPath?: string) => void
 }
 
 const defaultContext: BenchAuth0ContextValue = {

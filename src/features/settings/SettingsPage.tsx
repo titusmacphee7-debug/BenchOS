@@ -1,24 +1,33 @@
-import { Bell, Download, FileJson, FileSpreadsheet, HardDrive, Moon, RotateCcw, Settings, SlidersHorizontal, Trash2, Upload } from 'lucide-react'
+import { AlertTriangle, Bell, Download, FileJson, FileSpreadsheet, HardDrive, Moon, RotateCcw, Settings, ShieldAlert, SlidersHorizontal, Trash2, Upload } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Button } from '../../components/ui/Button'
 import { Card, CardTitle } from '../../components/ui/Card'
 import { ConfirmDialog } from '../../components/ui/ConfirmDialog'
 import { IconTile } from '../../components/ui/IconTile'
+import { Modal } from '../../components/ui/Modal'
 import { PageHeader } from '../../components/ui/PageHeader'
 import { StatusPill } from '../../components/ui/StatusPill'
 import { SEED_VERSION, type BackupTableName } from '../../data/schema'
 import { useSettings } from '../../data/hooks'
 import { db } from '../../data/db'
+import { benchApi, jsonBody } from '../../lib/api/benchApi'
+import { clearAuthSession } from '../../lib/auth/authService'
+import { useBenchAuth0 } from '../../lib/auth/benchAuth0Context'
 import { clearAllLocalData, exportBenchOsBackup, getTableCounts, importBenchOsBackup, resetSampleData, validateBenchOsBackup } from '../../lib/import-export/backup'
 import { materialsToCsv, projectsToCsv, toolUsageToCsv, toolsToCsv, wishlistToCsv } from '../../lib/import-export/csv'
 import { downloadTextFile, timestampedFilename } from '../../lib/import-export/download'
 import { APP_VERSION_LABEL, APP_VERSION_RULE } from '../../lib/version'
 
 type PendingAction = 'import' | 'resetSample' | 'clearAll' | undefined
+type DeleteAccountResponse = {
+  ok: boolean
+  redirectTo?: string
+}
 
 export function SettingsPage() {
   const navigate = useNavigate()
+  const auth0 = useBenchAuth0()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const settings = useSettings()
   const [counts, setCounts] = useState<Record<BackupTableName, number>>()
@@ -26,6 +35,10 @@ export function SettingsPage() {
   const [error, setError] = useState<string>()
   const [pendingAction, setPendingAction] = useState<PendingAction>()
   const [pendingBackup, setPendingBackup] = useState<unknown>()
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false)
+  const [deleteConfirmation, setDeleteConfirmation] = useState('')
+  const [deleteWorking, setDeleteWorking] = useState(false)
+  const [deleteError, setDeleteError] = useState<string>()
 
   useEffect(() => {
     let active = true
@@ -88,6 +101,37 @@ export function SettingsPage() {
               : toolUsageToCsv(await db.toolUsageLogs.toArray())
       downloadTextFile(timestampedFilename(`benchos-${kind}`, 'csv'), csv, 'text/csv')
     })
+  }
+
+  function closeDeleteModal() {
+    if (deleteWorking) return
+    setDeleteModalOpen(false)
+    setDeleteConfirmation('')
+    setDeleteError(undefined)
+  }
+
+  async function deleteAccount() {
+    if (deleteConfirmation !== 'DELETE' || deleteWorking) return
+    if (!auth0.available) {
+      setDeleteError('Auth0 session access is required before BenchOS can delete an account.')
+      return
+    }
+
+    setDeleteWorking(true)
+    setDeleteError(undefined)
+    try {
+      const response = await benchApi<DeleteAccountResponse>(auth0.getAccessToken, 'delete-account', {
+        method: 'DELETE',
+        body: jsonBody({ confirmation: deleteConfirmation }),
+      })
+      await clearAuthSession()
+      const redirectTo = response.redirectTo || '/account-deleted'
+      setDeleteModalOpen(false)
+      navigate(redirectTo, { replace: true })
+    } catch (caught) {
+      setDeleteError(caught instanceof Error ? caught.message : String(caught))
+      setDeleteWorking(false)
+    }
   }
 
   return (
@@ -175,6 +219,27 @@ export function SettingsPage() {
             </div>
           </Card>
 
+          <Card className="border-bench-red/30 bg-bench-red/5">
+            <CardTitle title="Account / Danger Zone" action={<StatusPill label="Irreversible" tone="red" />} />
+            <div className="flex items-start gap-4">
+              <IconTile icon={ShieldAlert} tone="red" size="lg" />
+              <div>
+                <p className="font-semibold text-bench-text">Delete BenchOS account</p>
+                <p className="mt-2 text-sm leading-6 text-bench-muted">
+                  Permanently remove your BenchOS workspace, inventory, projects, wishlist, BenchXP progress, guide progress, preferences, and account record.
+                </p>
+              </div>
+            </div>
+            <div className="mt-5 grid gap-3 sm:grid-cols-2">
+              <Button icon={<Download size={18} />} onClick={() => void exportJson()}>
+                Export first
+              </Button>
+              <Button variant="danger" icon={<Trash2 size={18} />} onClick={() => setDeleteModalOpen(true)}>
+                Delete account
+              </Button>
+            </div>
+          </Card>
+
           {pendingAction === 'import' && (
             <ConfirmDialog
               title="Import Backup"
@@ -206,6 +271,63 @@ export function SettingsPage() {
           )}
         </div>
       </div>
+
+      <Modal
+        open={deleteModalOpen}
+        title="Delete BenchOS account?"
+        description="This permanently deletes your BenchOS account and user-scoped workshop data. This action cannot be undone."
+        onClose={closeDeleteModal}
+      >
+        <div className="grid gap-5">
+          <div className="rounded-lg border border-bench-red/30 bg-bench-red/10 p-4">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="mt-0.5 shrink-0 text-bench-red" size={20} />
+              <p className="text-sm leading-6 text-bench-text">
+                Your tools, projects, materials, wishlist, BenchXP progress, guide progress, settings, and setup history will be removed.
+              </p>
+            </div>
+          </div>
+
+          <div className="rounded-lg border border-bench-border bg-white/[0.025] p-4 text-sm leading-6 text-bench-muted">
+            Want a copy first? Export your BenchOS data before deleting your account.
+            <div className="mt-3">
+              <Button size="sm" icon={<Download size={16} />} disabled={deleteWorking} onClick={() => void exportJson()}>
+                Export my data first
+              </Button>
+            </div>
+          </div>
+
+          <label className="grid gap-2 text-sm font-semibold text-bench-text" htmlFor="delete-confirmation">
+            Type DELETE to confirm.
+            <input
+              id="delete-confirmation"
+              value={deleteConfirmation}
+              disabled={deleteWorking}
+              onChange={(event) => setDeleteConfirmation(event.target.value)}
+              className="min-h-11 rounded-lg border border-bench-border bg-bench-bg px-3 text-bench-text outline-none transition focus:border-bench-orange focus:ring-2 focus:ring-bench-orange/30"
+              autoComplete="off"
+            />
+          </label>
+
+          {deleteError && (
+            <p className="rounded-lg border border-bench-red/30 bg-bench-red/10 p-3 text-sm text-bench-red">
+              {deleteError}
+            </p>
+          )}
+
+          <div className="flex flex-wrap justify-end gap-3">
+            <Button variant="secondary" disabled={deleteWorking} onClick={closeDeleteModal}>Cancel</Button>
+            <Button
+              variant="danger"
+              icon={<Trash2 size={16} />}
+              disabled={deleteConfirmation !== 'DELETE' || deleteWorking || !auth0.available}
+              onClick={() => void deleteAccount()}
+            >
+              {deleteWorking ? 'Deleting account...' : 'Permanently delete account'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   )
 }

@@ -56,6 +56,16 @@ AUTH0_DOMAIN
 AUTH0_AUDIENCE
 ```
 
+Required server-only Auth0 Management API variables for deleting an account:
+
+```text
+AUTH0_MANAGEMENT_CLIENT_ID
+AUTH0_MANAGEMENT_CLIENT_SECRET
+AUTH0_MANAGEMENT_AUDIENCE
+```
+
+Create or use an Auth0 Machine-to-Machine application that is authorized for the Auth0 Management API with the `delete:users` scope. Add the values in Netlify only. Never commit them to GitHub and never add them as `VITE_` variables.
+
 Do not add Auth0 client secrets to this frontend app. Do not commit `.env` or `.env.local`.
 
 ## C. Initialize Netlify Database
@@ -147,6 +157,7 @@ After Netlify says the deploy is live, test:
 - Auth0 logout returns to BenchOS after sign-out.
 - Netlify Database bootstrap succeeds after login.
 - Workshop Setup Mission can be completed or skipped.
+- Settings can open the account deletion modal and requires typing `DELETE`.
 - Refreshing app routes works, such as `/tool-library` or `/projects`.
 - Dashboard loads after onboarding is complete.
 - Tool Library loads.

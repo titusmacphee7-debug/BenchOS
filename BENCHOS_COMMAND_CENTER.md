@@ -17,7 +17,7 @@ This file keeps the BenchOS Codex chats coordinated and safe. Use plain language
 - Real BenchOS app folder: `C:\Users\slaye\Documents\Codex\BenchOS`.
 - Launcher folder: `C:\Users\slaye\OneDrive\Documents\New project`.
 - Main branch: `main`.
-- Current tracked app version: `v0.08`.
+- Current tracked app version: `v0.09`.
 - Version rule: every committed app/source-code change must increase the visible app version by `0.01`.
 - Shared version source: `src/lib/version.ts`.
 - The main folder is the trusted coordination and review folder.
@@ -179,3 +179,10 @@ Paste future chat summaries below this line.
 - Owner approved pushing the accumulated Auth0, Netlify Database onboarding, login polish, and Tool Mastery guide foundation work.
 - Version bumped from `v0.07` to `v0.08` for the release commit.
 - Do not push future changes automatically unless the owner explicitly approves another push.
+
+### v0.09 Delete Account Release Entry
+
+- Owner approved pushing the delete-account implementation and triggering a new Netlify deploy.
+- Version bumped from `v0.08` to `v0.09`.
+- Added Settings Account / Danger Zone UI, typed `DELETE` confirmation, public `/account-deleted` route, and server-side Auth0/Netlify Database deletion endpoint.
+- Auth0 Management API credentials remain server-only and must be configured in Netlify before real account deletion works.

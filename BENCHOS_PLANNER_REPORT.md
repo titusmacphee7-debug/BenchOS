@@ -2,7 +2,7 @@
 
 ## Version Tracking
 
-- Current app version: `v0.08`.
+- Current app version: `v0.09`.
 - Version source: `src/lib/version.ts`.
 - Version rule: every committed app/source-code change increases the visible app version by `0.01`.
 - Future Planner, Coordinator, Code Editor, Cleaner, and Reviewer notes should reference the current app version when planning or summarizing code-changing work.
@@ -12,6 +12,7 @@
 - `v0.06` adds Netlify HTTPS/mixed-content security headers after the owner saw a browser `Not secure` warning.
 - `v0.07` removes the stale Auth0 setup warning now that Auth0 login works.
 - `v0.08` includes the Auth0-only production login pass, Netlify Database onboarding foundation, and Tool Mastery guide foundation.
+- `v0.09` adds the delete-account foundation with Settings danger-zone UI, server-side Auth0-verified deletion, and Auth0 Management API setup docs.
 
 ## 1. Current Product Understanding
 

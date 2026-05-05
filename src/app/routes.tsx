@@ -7,6 +7,7 @@ const AccountOnboardingPage = lazy(() =>
   import('../features/auth/AccountOnboardingPage').then((module) => ({ default: module.AccountOnboardingPage })),
 )
 const AccountPage = lazy(() => import('../features/auth/AuthPages').then((module) => ({ default: module.AccountPage })))
+const AccountDeletedPage = lazy(() => import('../features/auth/AuthPages').then((module) => ({ default: module.AccountDeletedPage })))
 const LoginPage = lazy(() => import('../features/auth/AuthPages').then((module) => ({ default: module.LoginPage })))
 const SignupPage = lazy(() => import('../features/auth/AuthPages').then((module) => ({ default: module.SignupPage })))
 const DashboardPage = lazy(() => import('../features/dashboard/DashboardPage').then((module) => ({ default: module.DashboardPage })))
@@ -95,6 +96,7 @@ export function AppRoutes() {
       <Routes>
         <Route path="/login" element={publicAuthElement(<LoginPage />)} />
         <Route path="/signup" element={publicAuthElement(<SignupPage />)} />
+        <Route path="/account-deleted" element={publicAuthElement(<AccountDeletedPage />)} />
         <Route path="/reset-password" element={<Navigate to="/login" replace />} />
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
@@ -106,6 +108,7 @@ export function AppRoutes() {
   if (!accountOnboarding.complete) {
     return (
       <Routes>
+        <Route path="/account-deleted" element={publicAuthElement(<AccountDeletedPage />)} />
         <Route element={<AppShell />}>
           <Route path="/account-onboarding" element={routeElement(<AccountOnboardingPage />)} />
           <Route path="/account" element={routeElement(<AccountPage />)} />
@@ -120,6 +123,7 @@ export function AppRoutes() {
 
   return (
     <Routes>
+      <Route path="/account-deleted" element={publicAuthElement(<AccountDeletedPage />)} />
       <Route element={<AppShell />}>
         <Route index element={routeElement(<DashboardPage />)} />
         <Route path="tool-library" element={routeElement(<ToolLibraryPage />)} />

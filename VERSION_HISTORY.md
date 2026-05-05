@@ -11,10 +11,19 @@
 ## Current Version
 
 ```text
-BenchOS v0.08
+BenchOS v0.09
 ```
 
 ## History
+
+### v0.09 - Delete Account Foundation
+
+- Added Settings Account / Danger Zone delete-account UI.
+- Added typed `DELETE` confirmation and export-before-delete prompt.
+- Added public `/account-deleted` page.
+- Added server-side Netlify Function for Auth0-verified account deletion.
+- Documented server-only Auth0 Management API env names and `delete:users` requirement.
+- Preserved Auth0-only production auth and did not expose secrets.
 
 ### v0.08 - Auth0 Production, Onboarding, And Tool Mastery Foundation
 

@@ -115,6 +115,16 @@ AUTH0_DOMAIN
 AUTH0_AUDIENCE
 ```
 
+Server-only Auth0 Management API env names for account deletion:
+
+```text
+AUTH0_MANAGEMENT_CLIENT_ID
+AUTH0_MANAGEMENT_CLIENT_SECRET
+AUTH0_MANAGEMENT_AUDIENCE
+```
+
+The Auth0 Management API credentials must be stored only in Netlify environment variables. They are used by the `delete-account` function to delete the currently verified Auth0 user after the user types `DELETE`.
+
 Do not put real values in this document.
 
 ## Env Files

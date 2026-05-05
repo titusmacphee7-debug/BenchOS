@@ -123,6 +123,28 @@ export function AccountPage() {
   )
 }
 
+export function AccountDeletedPage() {
+  return (
+    <div className="mx-auto max-w-2xl rounded-[1.5rem] border border-bench-border bg-bench-panel/95 p-6 shadow-panel md:p-8">
+      <div className="mb-5 flex items-center gap-3">
+        <span className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-bench-green/35 bg-bench-green/10 text-bench-green">
+          <CheckCircle2 size={22} />
+        </span>
+        <StatusPill label="Account deleted" tone="green" />
+      </div>
+      <h1 className="text-3xl font-black leading-tight text-bench-text">Your BenchOS account has been deleted.</h1>
+      <p className="mt-4 text-sm leading-6 text-bench-muted">
+        You have been signed out and this browser can no longer access the deleted workspace. A future signup with the same email will create a clean new BenchOS account.
+      </p>
+      <div className="mt-6">
+        <Link to="/login">
+          <Button icon={<KeyRound size={16} />}>Return to sign in</Button>
+        </Link>
+      </div>
+    </div>
+  )
+}
+
 function AuthPanel({ mode }: { mode: AuthMode }) {
   const auth0 = useBenchAuth0()
   const [error, setError] = useState<string>()

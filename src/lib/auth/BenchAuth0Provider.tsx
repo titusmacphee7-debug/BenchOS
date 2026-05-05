@@ -29,7 +29,7 @@ function BenchAuth0SessionProvider({ children }: { children: ReactNode }) {
     login: () => auth0.loginWithRedirect(),
     signup: () => auth0.loginWithRedirect({ authorizationParams: { screen_hint: 'signup' } }),
     getAccessToken: () => auth0.getAccessTokenSilently(audience ? { authorizationParams: { audience } } : undefined),
-    logout: () => auth0.logout({ logoutParams: { returnTo: getAuth0RedirectUri() } }),
+    logout: (returnToPath) => auth0.logout({ logoutParams: { returnTo: auth0ReturnTo(returnToPath) } }),
   }), [auth0, audience])
 
   return (
@@ -37,4 +37,11 @@ function BenchAuth0SessionProvider({ children }: { children: ReactNode }) {
       {children}
     </BenchAuth0Context.Provider>
   )
+}
+
+function auth0ReturnTo(returnToPath?: string) {
+  const origin = getAuth0RedirectUri()
+  if (!returnToPath) return origin
+  if (/^https?:\/\//.test(returnToPath)) return returnToPath
+  return `${origin}${returnToPath.startsWith('/') ? returnToPath : `/${returnToPath}`}`
 }

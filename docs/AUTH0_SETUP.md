@@ -64,6 +64,24 @@ VITE_AUTH0_CLIENT_ID
 
 Do not add Auth0 client secrets to this frontend app.
 
+## Account Deletion Management API
+
+Deleting a BenchOS account requires a server-side Auth0 Machine-to-Machine application. In Auth0, authorize that application for the Management API with this scope:
+
+```text
+delete:users
+```
+
+Then add these names in Netlify environment variables only:
+
+```text
+AUTH0_MANAGEMENT_CLIENT_ID
+AUTH0_MANAGEMENT_CLIENT_SECRET
+AUTH0_MANAGEMENT_AUDIENCE
+```
+
+Do not put Management API secrets in `.env.example`, browser code, or any `VITE_` variable. BenchOS deletes only the Auth0 user identified by the server-verified access token subject.
+
 ## Testing
 
 1. Start the app with `npm run dev -- --host 127.0.0.1`.
