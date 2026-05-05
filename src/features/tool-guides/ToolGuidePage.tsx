@@ -1,6 +1,7 @@
 import {
   AlertTriangle,
   ArrowLeft,
+  ArrowRight,
   BookOpen,
   CheckCircle2,
   ClipboardCheck,
@@ -19,12 +20,20 @@ import { Link, Navigate, useParams } from 'react-router-dom'
 import { Button } from '../../components/ui/Button'
 import { Card, CardTitle } from '../../components/ui/Card'
 import { IconTile } from '../../components/ui/IconTile'
+import { ProgressBar } from '../../components/ui/ProgressBar'
 import { StatusPill } from '../../components/ui/StatusPill'
-import { useMasteryGuides, useToolCatalogData, useToolGuideSections } from '../../data/hooks'
+import { useActiveUserTools, useMasteryGuides, useToolCatalogData, useToolGuideSections } from '../../data/hooks'
 import type { ToolGuideSection } from '../../data/schema'
 import { useBenchXp } from '../../lib/benchxp/useBenchXp'
 import type { BenchXpEvidence, BenchXpProgress, BenchXpRecommendation } from '../../lib/benchxp/benchXpApi'
-import { getFamiliarityLabel, getToolMasteryGuideContent, guideSectionsForMode, type GuideDepthMode, type ToolMasteryGuideContent } from '../../lib/guides/toolMasteryContent'
+import {
+  getFamiliarityLabel,
+  getToolMasteryGuideContent,
+  guideSectionsForMode,
+  skillDimensions,
+  type GuideDepthMode,
+  type ToolMasteryGuideContent,
+} from '../../lib/guides/toolMasteryContent'
 import { resolveToolGuide } from '../../lib/guides/toolGuideLookup'
 
 const depthModes: Array<{ id: GuideDepthMode; label: string; description: string }> = [
@@ -69,6 +78,7 @@ export function ToolGuidePage() {
   const { items } = useToolCatalogData()
   const guideSections = useToolGuideSections()
   const masteryGuides = useMasteryGuides()
+  const ownedTools = useActiveUserTools()
   const benchXp = useBenchXp()
   const [depthMode, setDepthMode] = useState<GuideDepthMode>('quick')
   const [actionNotice, setActionNotice] = useState('')
@@ -84,11 +94,15 @@ export function ToolGuidePage() {
   const category = structuredGuide?.category ?? tool?.toolType.category
   const sections = structuredGuide ? guideSectionsForMode(structuredGuide, depthMode) : legacySections(legacyGuide?.sections ?? [])
   const ownedCatalogCount = items.filter((item) => item.internalToolTypeId === toolTypeId).length
+  const matchingOwnedTools = ownedTools.filter((ownedTool) => ownedTool.toolTypeId === toolTypeId)
+  const primaryOwnedTool = matchingOwnedTools[0]
   const guideId = structuredGuide ? guideIdForToolType(structuredGuide.toolTypeId) : undefined
   const progress = guideId ? benchXp.state.progress.find((item) => item.guideId === guideId) : undefined
   const isFavorite = guideId ? benchXp.state.favoriteGuideIds.includes(guideId) : false
   const guideEvidence = progress ? benchXp.state.evidence.filter((item) => item.progressId === progress.id || item.guideId === progress.guideId) : []
   const recommendations = structuredGuide ? benchXp.state.recommendations.filter((item) => item.toolTypeId === structuredGuide.toolTypeId).slice(0, 3) : []
+  const familiarityScore = progress?.familiarityScore ?? 0
+  const familiarityLabel = getFamiliarityLabel(familiarityScore)
 
   async function runGuideAction(successMessage: string, action: () => Promise<unknown>) {
     setActionNotice('')
@@ -100,6 +114,15 @@ export function ToolGuidePage() {
     }
   }
 
+  function startGuide() {
+    if (!structuredGuide || !guideId) return Promise.resolve()
+    return runGuideAction('Guide started. BenchXP will now track real evidence for this tool type.', () => benchXp.startGuide({
+      guideId,
+      toolTypeId: structuredGuide.toolTypeId,
+      userToolId: primaryOwnedTool?.id,
+    }))
+  }
+
   return (
     <div className="grid gap-5">
       <section>
@@ -107,23 +130,42 @@ export function ToolGuidePage() {
           <ArrowLeft size={16} /> Tool Library
         </Link>
         <div className="overflow-hidden rounded-3xl border border-bench-border bg-[radial-gradient(circle_at_80%_10%,rgba(255,106,0,0.18),transparent_34%),linear-gradient(135deg,rgba(255,255,255,0.055),rgba(255,255,255,0.015))] p-5 shadow-panel md:p-7">
-          <div className="grid gap-6 lg:grid-cols-[1fr_320px] lg:items-end">
+          <div className="grid gap-6 lg:grid-cols-[1fr_360px] lg:items-end">
             <div>
               <div className="flex flex-wrap gap-2">
                 <StatusPill label="Tool Mastery Guide" tone="orange" />
                 {category && <StatusPill label={category} tone="blue" />}
                 {structuredGuide && <StatusPill label={`${structuredGuide.riskClass} risk`} tone={riskTone(structuredGuide.riskClass)} />}
-                <StatusPill label="BenchXP familiarity" tone="purple" />
+                <StatusPill label={primaryOwnedTool ? `Owned: ${formatOwnedTool(primaryOwnedTool)}` : 'Not in inventory'} tone={primaryOwnedTool ? 'green' : 'muted'} />
               </div>
               <h1 className="mt-4 max-w-3xl text-3xl font-black leading-tight text-bench-text md:text-4xl">{title} Guide</h1>
               <p className="mt-3 max-w-3xl text-sm leading-7 text-bench-muted">
                 {structuredGuide?.summary ?? 'Practical guidance connected to readiness, accessories, consumables, and BenchXP familiarity.'}
               </p>
+              <div className="mt-5 flex flex-wrap gap-3">
+                <Button variant="primary" icon={<PlayIcon />} disabled={benchXp.loading || !structuredGuide} onClick={() => void startGuide()}>
+                  {progress ? 'Continue guide' : 'Start guide'}
+                </Button>
+                <Link to="/my-tools" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-bench-border bg-white/5 px-4 text-sm font-semibold text-bench-text hover:border-bench-orange/60 hover:bg-white/8">
+                  {primaryOwnedTool ? 'View owned tool' : 'Add to inventory'}
+                </Link>
+                <Link to="/wishlist" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-bench-orange/40 bg-bench-orange/5 px-4 text-sm font-semibold text-bench-orange hover:bg-bench-orange/10">
+                  Wishlist support
+                </Link>
+              </div>
             </div>
             <div className="rounded-2xl border border-bench-orange/25 bg-bench-orange/10 p-4">
-              <p className="text-sm font-bold text-bench-orange">Balanced Warnings</p>
+              <div className="flex items-end justify-between gap-3">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-[0.18em] text-bench-orange">Familiarity score</p>
+                  <p className="mt-2 text-5xl font-black text-bench-text">{familiarityScore}</p>
+                  <p className="text-sm text-bench-muted">{familiarityLabel}</p>
+                </div>
+                <StatusPill label={`${progress?.xp ?? 0} XP`} tone="purple" />
+              </div>
+              <ProgressBar className="mt-4" value={familiarityScore} tone="orange" />
               <p className="mt-2 text-sm leading-6 text-bench-muted">
-                Guide familiarity adds confidence and next-skill recommendations. BenchOS does not treat BenchXP as certification or a hard safety gate.
+                Balanced Warnings add confidence and next-skill recommendations. BenchXP is not certification or a hard safety gate.
               </p>
             </div>
           </div>
@@ -164,10 +206,12 @@ export function ToolGuidePage() {
         </aside>
 
         <main className="grid gap-4">
+          {structuredGuide && <QuickReferenceCard guide={structuredGuide} ownedCount={matchingOwnedTools.length} />}
           {structuredGuide && <SafetyCallout guide={structuredGuide} />}
           {sections.map((section) => (
             <GuideSectionCard key={section.title} title={section.title} items={section.items} />
           ))}
+          {structuredGuide && <ProjectReadinessConnection guide={structuredGuide} recommendations={recommendations} />}
         </main>
 
         <aside className="space-y-4 xl:sticky xl:top-5 xl:h-fit">
@@ -220,6 +264,10 @@ export function ToolGuidePage() {
   )
 }
 
+function PlayIcon() {
+  return <ArrowRight size={16} />
+}
+
 function DepthSelector({ value, onChange, disabled }: { value: GuideDepthMode; onChange: (value: GuideDepthMode) => void; disabled: boolean }) {
   return (
     <Card>
@@ -264,6 +312,48 @@ function SafetyCallout({ guide }: { guide: ToolMasteryGuideContent }) {
         </div>
       </div>
     </Card>
+  )
+}
+
+function QuickReferenceCard({ guide, ownedCount }: { guide: ToolMasteryGuideContent; ownedCount: number }) {
+  const mostImportantSetup = guide.setup[0] ?? 'Confirm the setup is stable before using the tool.'
+  const commonMistake = guide.commonMistakes[0] ?? 'Rushing the setup before checking the workpiece.'
+
+  return (
+    <Card>
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div>
+          <div className="flex flex-wrap gap-2">
+            <StatusPill label="Quick reference" tone="orange" />
+            <StatusPill label={ownedCount > 0 ? `${ownedCount} owned` : 'guide-only'} tone={ownedCount > 0 ? 'green' : 'muted'} />
+          </div>
+          <h2 className="mt-3 text-2xl font-black text-bench-text">What to check before this tool hits the project.</h2>
+          <p className="mt-2 text-sm leading-7 text-bench-muted">{guide.overview[0] ?? guide.summary}</p>
+        </div>
+      </div>
+      <div className="mt-5 grid gap-3 md:grid-cols-2">
+        <QuickReferenceItem icon={CheckCircle2} label="Use it for" detail={guide.bestUses.slice(0, 3).join(', ')} />
+        <QuickReferenceItem icon={AlertTriangle} label="Do not use it when" detail={guide.avoidWhen[0] ?? 'the setup feels unstable'} />
+        <QuickReferenceItem icon={ShieldCheck} label="PPE" detail={guide.ppe.slice(0, 3).join(', ')} />
+        <QuickReferenceItem icon={Hammer} label="Key setup check" detail={mostImportantSetup} />
+        <QuickReferenceItem icon={Gauge} label="Common mistake" detail={commonMistake} />
+        <QuickReferenceItem icon={ClipboardCheck} label="Maintenance habit" detail={guide.maintenance[0] ?? 'Inspect and clean after use.'} />
+      </div>
+    </Card>
+  )
+}
+
+function QuickReferenceItem({ icon: Icon, label, detail }: { icon: LucideIcon; label: string; detail: string }) {
+  return (
+    <div className="rounded-xl border border-bench-border bg-white/[0.025] p-3">
+      <div className="flex items-start gap-3">
+        <Icon className="mt-0.5 shrink-0 text-bench-orange" size={17} />
+        <div>
+          <p className="text-sm font-bold text-bench-text">{label}</p>
+          <p className="mt-1 text-sm leading-6 text-bench-muted">{detail}</p>
+        </div>
+      </div>
+    </div>
   )
 }
 
@@ -335,6 +425,7 @@ function BenchXpPanel({
           </div>
           <StatusPill label={`${progress?.xp ?? 0} XP`} tone="purple" />
         </div>
+        <SkillDimensionBars scores={progress?.skillScores ?? emptySkillScores()} />
       </div>
       {error && (
         <div className="mt-4 rounded-lg border border-bench-yellow/35 bg-bench-yellow/10 p-3 text-sm text-bench-yellow">
@@ -361,6 +452,26 @@ function BenchXpPanel({
       </Button>
     </Card>
   )
+}
+
+function SkillDimensionBars({ scores }: { scores: Record<string, number> }) {
+  return (
+    <div className="mt-4 grid gap-2">
+      {skillDimensions.map((dimension) => (
+        <div key={dimension}>
+          <div className="mb-1 flex items-center justify-between gap-3 text-xs">
+            <span className="font-semibold text-bench-muted">{dimension}</span>
+            <span className="text-bench-text">{scores[dimension] ?? 0}</span>
+          </div>
+          <ProgressBar value={scores[dimension] ?? 0} tone={dimension === 'Safety' ? 'green' : dimension === 'Maintenance' ? 'blue' : 'orange'} />
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function emptySkillScores() {
+  return Object.fromEntries(skillDimensions.map((dimension) => [dimension, 0]))
 }
 
 function EvidenceRow({ label, detail }: { label: string; detail: string }) {
@@ -427,6 +538,38 @@ function PracticePanel({
   )
 }
 
+function ProjectReadinessConnection({ guide, recommendations }: { guide: ToolMasteryGuideContent; recommendations: BenchXpRecommendation[] }) {
+  return (
+    <Card>
+      <div className="flex items-start gap-3">
+        <IconTile icon={Gauge} tone="purple" />
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap gap-2">
+            <StatusPill label="Project readiness connection" tone="purple" />
+            <StatusPill label="Balanced Warnings" tone="orange" />
+          </div>
+          <h2 className="mt-3 text-xl font-bold text-bench-text">How this guide affects build confidence</h2>
+          <p className="mt-2 text-sm leading-7 text-bench-muted">
+            BenchOS keeps ownership and materials as the base readiness check, then uses guide evidence to explain confidence, weak spots, and next skills.
+          </p>
+          <div className="mt-4 grid gap-3 md:grid-cols-2">
+            {guide.readinessWarnings.slice(0, 2).map((warning) => (
+              <div key={warning} className="rounded-xl border border-bench-yellow/30 bg-bench-yellow/10 p-3 text-sm leading-6 text-bench-muted">
+                {warning}
+              </div>
+            ))}
+            {(recommendations.length > 0 ? recommendations.slice(0, 2) : [{ id: 'starter', title: 'Log one practice task', detail: guide.practiceTasks[0]?.goal ?? 'Create one real evidence signal.' }]).map((recommendation) => (
+              <div key={recommendation.id} className="rounded-xl border border-bench-border bg-white/[0.025] p-3 text-sm leading-6 text-bench-muted">
+                <span className="font-bold text-bench-text">{recommendation.title}: </span>{recommendation.detail}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </Card>
+  )
+}
+
 function legacySections(sections: ToolGuideSection[]) {
   return sections.map((section) => ({ title: section.title, items: [section.body] }))
 }
@@ -443,4 +586,9 @@ function sectionId(title: string) {
 
 function guideIdForToolType(toolTypeId: string) {
   return `guide-${toolTypeId}`
+}
+
+function formatOwnedTool(tool: { brand?: string; model?: string; name: string }) {
+  const brandModel = [tool.brand, tool.model].filter(Boolean).join(' ')
+  return brandModel || tool.name
 }
