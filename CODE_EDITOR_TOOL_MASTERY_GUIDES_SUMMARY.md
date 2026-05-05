@@ -57,14 +57,15 @@ Implemented the Tool Mastery Guides + BenchXP foundation pass from `BENCHOS_TOOL
 ## Persistence Gaps
 
 - Static guide content is implemented.
-- User-specific guide progress still uses the existing local app progress layer.
-- Production persistence for guide progress, evidence, confidence check-ins, mistakes, maintenance evidence, dismissed hints, and preferences still needs Auth0-verified Netlify Functions backed by Netlify Database.
-- No new local production fallback was added.
+- User-specific guide progress now has an Auth0-verified Netlify Function path through `/.netlify/functions/benchxp`.
+- Netlify Database migration `0002_benchxp_mastery` adds guide progress, checklist progress, XP events, evidence, confidence, mistakes, maintenance, familiarity aggregate, favorite guide, dismissed tooltip, roadmap, and readiness preference tables.
+- Old local/Dexie mastery code still exists for legacy data paths/tests, but production UI surfaces now use the server-backed BenchXP API.
+- Historical migration from old local mastery progress into server progress was not included.
 
 ## Auth / Database Notes
 
-- No Auth0 logic was changed.
-- No database schema or migration was changed in this pass.
+- Auth0 token verification is reused by the new `benchxp` Function.
+- A Netlify Database migration was added for server-backed BenchXP.
 - Netlify Database remains the documented production database direction.
 - Browser code still does not receive database credentials.
 
@@ -74,9 +75,8 @@ Implemented the Tool Mastery Guides + BenchXP foundation pass from `BENCHOS_TOOL
 
 ## Version / Git
 
-- Version was not bumped because the owner said the version can stay unchanged until push/release approval.
-- No commit was made.
-- No push was made.
+- Version was later bumped to BenchOS `v0.11` / package `0.0.11` when the owner approved pushing the BenchXP upgrade.
+- Commit/push status is recorded in `CODE_EDITOR_BENCHXP_FULL_UPGRADE_SUMMARY.md` and the final push response.
 - The worktree already had many uncommitted auth/onboarding/database changes before this pass; those were not reverted.
 
 ## Commands Run

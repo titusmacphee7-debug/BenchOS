@@ -35,6 +35,8 @@ import {
 } from '../../data/hooks'
 import type { Project, ProjectFormValues, ProjectRequirement, ProjectRequirementFormValues, RequirementKind } from '../../data/schema'
 import { projectStatuses, requirementKinds, toolCategories } from '../../data/schema'
+import { calculateReadinessConfidence } from '../../lib/benchxp/readinessConfidence'
+import { useBenchXp } from '../../lib/benchxp/useBenchXp'
 import { calculateProjectReadiness } from '../../lib/readiness/readinessEngine'
 import { readinessTone } from '../../lib/utils/status'
 
@@ -48,6 +50,7 @@ export function ProjectDetailPage() {
   const userTools = useActiveUserTools()
   const materials = useActiveMaterials()
   const { items: toolTypes, capabilities, typeCapabilities } = useToolLibraryData()
+  const benchXp = useBenchXp()
   const [projectModalOpen, setProjectModalOpen] = useState(false)
   const [requirementModalOpen, setRequirementModalOpen] = useState(false)
   const [toolUsageModalOpen, setToolUsageModalOpen] = useState(false)
@@ -59,6 +62,11 @@ export function ProjectDetailPage() {
     ? calculateProjectReadiness({ project, requirements, userTools, materials, toolTypeCapabilities: typeCapabilities })
     : undefined,
   [materials, project, requirements, typeCapabilities, userTools])
+  const readinessConfidence = useMemo(() => calculateReadinessConfidence({
+    requirements,
+    ownedToolTypeIds: userTools.map((tool) => tool.toolTypeId).filter((toolTypeId): toolTypeId is string => Boolean(toolTypeId)),
+    progress: benchXp.state.progress,
+  }), [benchXp.state.progress, requirements, userTools])
 
   if (!project || !readiness) {
     return (
@@ -129,6 +137,15 @@ export function ProjectDetailPage() {
             <div className="mt-4 rounded-lg border border-bench-yellow/30 bg-bench-yellow/10 p-3 text-sm text-bench-yellow">
               {readiness.cautions[0]}
             </div>
+          )}
+          {readinessConfidence.warnings.length > 0 && (
+            <div className="mt-4 rounded-lg border border-bench-yellow/30 bg-bench-yellow/10 p-3 text-sm text-bench-yellow">
+              <p className="font-semibold">Balanced Warning</p>
+              <p className="mt-1">{readinessConfidence.warnings[0].title}</p>
+            </div>
+          )}
+          {readinessConfidence.weakestLink && (
+            <p className="mt-3 text-xs text-bench-muted">Weakest BenchXP signal: {readinessConfidence.weakestLink.detail}</p>
           )}
           <Button
             className="mt-5 w-full"

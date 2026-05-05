@@ -34,7 +34,6 @@ import {
   useAuthSessionState,
   useAllProjectRequirements,
   useMasteryGuides,
-  useMasteryProgress,
   useProjectTemplateData,
   useRecentActivityFeed,
   useToolLibraryData,
@@ -42,10 +41,11 @@ import {
   useUserProfile,
   useWorkshopProfile,
   useWorkshopDiagnostics,
-  useXpSummary,
 } from '../../data/hooks'
 import { sortTemplatesForWorkshop } from '../../lib/preferences/accountPersonalization'
 import type { Material, Project, ReadinessResult, UserTool, WishlistItem } from '../../data/schema'
+import { useBenchXp } from '../../lib/benchxp/useBenchXp'
+import { getFamiliarityLabel } from '../../lib/guides/toolMasteryContent'
 import { getMaterialStockStatus } from '../../lib/inventory/inventory'
 import { calculateProjectReadiness } from '../../lib/readiness/readinessEngine'
 import { conditionTone, priorityTone, readinessTone, stockTone, usageTone } from '../../lib/utils/status'
@@ -145,9 +145,10 @@ export function DashboardPage() {
   const projects = useActiveProjects()
   const requirements = useAllProjectRequirements()
   const wishlistItems = useActiveWishlistItems()
-  const xpSummary = useXpSummary()
+  const benchXp = useBenchXp()
+  const xpSummary = benchXp.state.summary
   const masteryGuides = useMasteryGuides()
-  const masteryProgress = useMasteryProgress()
+  const masteryProgress = benchXp.state.progress
   const recentActivity = useRecentActivityFeed(6)
   const maintenanceTools = useToolsNeedingMaintenance()
   const notifications = useActiveNotifications()
@@ -173,7 +174,7 @@ export function DashboardPage() {
   })), [materials, projects, requirements, typeCapabilities, userTools])
   const buildableCount = projectRows.filter((project) => project.readiness.status === 'Buildable Now').length
   const missingWishlist = wishlistItems.filter((item) => item.status !== 'Converted' && item.status !== 'Archived')
-  const activeMastery = masteryProgress.find((progress) => progress.status === 'In Progress') ?? masteryProgress[0]
+  const activeMastery = masteryProgress.find((progress) => progress.status === 'in_progress') ?? masteryProgress[0]
   const activeGuide = masteryGuides.find((guide) => guide.id === activeMastery?.guideId)
   const suggestedTemplates = useMemo(() => sortTemplatesForWorkshop(templates, workshopProfile).slice(0, 3), [templates, workshopProfile])
 
@@ -326,15 +327,16 @@ export function DashboardPage() {
               {activeMastery && activeGuide && (
                 <div className="mt-4 rounded-lg border border-bench-border bg-white/[0.025] p-3">
                   <p className="text-sm font-semibold">{activeGuide.toolName}</p>
-                  <p className="text-xs text-bench-muted">{activeMastery.status} - Level {activeMastery.level}</p>
+                  <p className="text-xs text-bench-muted">{benchXpStatusLabel(activeMastery.status)} - {getFamiliarityLabel(activeMastery.familiarityScore)}</p>
                 </div>
               )}
               {[
-                ['Safety', activeMastery?.safetyProgress ?? 0],
-                ['Setup', activeMastery?.setupProgress ?? 0],
-                ['Operation', activeMastery?.operationProgress ?? 0],
-                ['Accuracy', activeMastery?.accuracyProgress ?? 0],
-                ['Maintenance', activeMastery?.maintenanceProgress ?? 0],
+                ['Safety', activeMastery?.skillScores.Safety ?? 0],
+                ['Setup', activeMastery?.skillScores.Setup ?? 0],
+                ['Control', activeMastery?.skillScores.Control ?? 0],
+                ['Accuracy', activeMastery?.skillScores.Accuracy ?? 0],
+                ['Maintenance', activeMastery?.skillScores.Maintenance ?? 0],
+                ['Project Use', activeMastery?.skillScores['Project Use'] ?? 0],
               ].map(([label, value]) => (
                 <div key={label} className="mt-3 grid grid-cols-[1fr_1.1fr_3rem] items-center gap-3 text-sm">
                   <span className="text-bench-muted">{label}</span>
@@ -405,4 +407,10 @@ function formatDate(value: string) {
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return value
   return date.toLocaleDateString()
+}
+
+function benchXpStatusLabel(status: string) {
+  if (status === 'completed') return 'Completed Guide'
+  if (status === 'in_progress') return 'In Progress'
+  return 'Not Started'
 }

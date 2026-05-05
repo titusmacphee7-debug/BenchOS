@@ -10,23 +10,35 @@ import {
   PackageCheck,
   ShieldCheck,
   ShoppingCart,
+  Star,
   Wrench,
 } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import type { LucideIcon } from 'lucide-react'
 import { Link, Navigate, useParams } from 'react-router-dom'
+import { Button } from '../../components/ui/Button'
 import { Card, CardTitle } from '../../components/ui/Card'
 import { IconTile } from '../../components/ui/IconTile'
 import { StatusPill } from '../../components/ui/StatusPill'
 import { useMasteryGuides, useToolCatalogData, useToolGuideSections } from '../../data/hooks'
 import type { ToolGuideSection } from '../../data/schema'
-import { getToolMasteryGuideContent, guideSectionsForMode, type GuideDepthMode, type ToolMasteryGuideContent } from '../../lib/guides/toolMasteryContent'
+import { useBenchXp } from '../../lib/benchxp/useBenchXp'
+import type { BenchXpEvidence, BenchXpProgress, BenchXpRecommendation } from '../../lib/benchxp/benchXpApi'
+import { getFamiliarityLabel, getToolMasteryGuideContent, guideSectionsForMode, type GuideDepthMode, type ToolMasteryGuideContent } from '../../lib/guides/toolMasteryContent'
 import { resolveToolGuide } from '../../lib/guides/toolGuideLookup'
 
 const depthModes: Array<{ id: GuideDepthMode; label: string; description: string }> = [
   { id: 'quick', label: 'Quick Guide', description: 'Safety, setup, use, and common mistakes.' },
   { id: 'full', label: 'Full Guide', description: 'Complete reference for practice and projects.' },
   { id: 'shop-card', label: 'Shop Card', description: 'Compact checklist for project work.' },
+]
+
+const commonMistakes = [
+  { key: 'measurement-off', label: 'Measurement off' },
+  { key: 'wrong-bit-or-blade', label: 'Wrong bit/blade' },
+  { key: 'hard-to-control', label: 'Hard to control' },
+  { key: 'dust-problem', label: 'Dust problem' },
+  { key: 'forgot-ppe', label: 'Forgot PPE' },
 ]
 
 const sectionIcons: Record<string, LucideIcon> = {
@@ -57,6 +69,7 @@ export function ToolGuidePage() {
   const { items } = useToolCatalogData()
   const guideSections = useToolGuideSections()
   const masteryGuides = useMasteryGuides()
+  const benchXp = useBenchXp()
   const [depthMode, setDepthMode] = useState<GuideDepthMode>('quick')
 
   if (!toolTypeId) return <Navigate to="/tool-library" replace />
@@ -70,6 +83,11 @@ export function ToolGuidePage() {
   const category = structuredGuide?.category ?? tool?.toolType.category
   const sections = structuredGuide ? guideSectionsForMode(structuredGuide, depthMode) : legacySections(legacyGuide?.sections ?? [])
   const ownedCatalogCount = items.filter((item) => item.internalToolTypeId === toolTypeId).length
+  const guideId = structuredGuide ? guideIdForToolType(structuredGuide.toolTypeId) : undefined
+  const progress = guideId ? benchXp.state.progress.find((item) => item.guideId === guideId) : undefined
+  const isFavorite = guideId ? benchXp.state.favoriteGuideIds.includes(guideId) : false
+  const guideEvidence = progress ? benchXp.state.evidence.filter((item) => item.progressId === progress.id || item.guideId === progress.guideId) : []
+  const recommendations = structuredGuide ? benchXp.state.recommendations.filter((item) => item.toolTypeId === structuredGuide.toolTypeId).slice(0, 3) : []
 
   return (
     <div className="grid gap-5">
@@ -136,12 +154,44 @@ export function ToolGuidePage() {
         </main>
 
         <aside className="space-y-4 xl:sticky xl:top-5 xl:h-fit">
-          {structuredGuide && <BenchXpPanel guide={structuredGuide} />}
-          {structuredGuide && <PracticePanel guide={structuredGuide} />}
+          {structuredGuide && guideId && (
+            <BenchXpPanel
+              guide={structuredGuide}
+              progress={progress}
+              evidence={guideEvidence}
+              recommendations={recommendations}
+              loading={benchXp.loading}
+              error={benchXp.error}
+              onConfidence={(confidence) => benchXp.logConfidence({ guideId, toolTypeId: structuredGuide.toolTypeId, confidence })}
+              isFavorite={isFavorite}
+              onToggleFavorite={() => benchXp.toggleFavoriteGuide({ guideId, toolTypeId: structuredGuide.toolTypeId, favorite: !isFavorite })}
+            />
+          )}
+          {structuredGuide && guideId && (
+            <PracticePanel
+              guide={structuredGuide}
+              disabled={benchXp.loading}
+              onLogPractice={(taskIndex) => {
+                const task = structuredGuide.practiceTasks[taskIndex]
+                return benchXp.logPractice({
+                  guideId,
+                  toolTypeId: structuredGuide.toolTypeId,
+                  taskId: `${structuredGuide.toolTypeId}-practice-${taskIndex + 1}`,
+                  title: task.title,
+                  dimensions: task.dimensions,
+                  xp: task.xp,
+                  result: task.expectedResult,
+                  totalStepCount: sections.length,
+                })
+              }}
+              onLogMistake={(mistakeKey) => benchXp.logMistake({ guideId, toolTypeId: structuredGuide.toolTypeId, mistakeKey })}
+              onLogMaintenance={() => benchXp.logMaintenance({ guideId, toolTypeId: structuredGuide.toolTypeId, maintenanceKey: 'guide-maintenance-review' })}
+            />
+          )}
           <Card>
             <CardTitle title="Next Step" />
             <p className="text-sm leading-6 text-bench-muted">
-              Use this guide before a project, then log real practice or project use from your workshop activity. Production progress persistence belongs in the Auth0-verified Netlify Database API phase.
+              Use this guide before a project, then log real practice, confidence, mistake, or maintenance evidence. BenchXP stores those signals through the Auth0-verified API.
             </p>
             <Link to={`/mastery?tool=${toolTypeId}`} className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-bench-orange/35 px-4 py-3 text-sm font-bold text-bench-orange hover:bg-bench-orange/10">
               Open BenchXP Tracker
@@ -222,37 +272,107 @@ function GuideSectionCard({ title, items }: { title: string; items: string[] }) 
   )
 }
 
-function BenchXpPanel({ guide }: { guide: ToolMasteryGuideContent }) {
-  const evidenceRows = useMemo(() => [
-    ['Positive evidence', 'Guide sections read, practice logged, maintenance recorded, project use confirmed.'],
-    ['Missing evidence', 'No confidence check-in, no project use, or no recent maintenance evidence yet.'],
-    ['Recommended next skill', guide.practiceTasks[0]?.title ?? 'Complete one controlled practice task.'],
-  ], [guide.practiceTasks])
+function BenchXpPanel({
+  guide,
+  progress,
+  evidence,
+  recommendations,
+  loading,
+  error,
+  onConfidence,
+  isFavorite,
+  onToggleFavorite,
+}: {
+  guide: ToolMasteryGuideContent
+  progress?: BenchXpProgress
+  evidence: BenchXpEvidence[]
+  recommendations: BenchXpRecommendation[]
+  loading: boolean
+  error?: string
+  onConfidence: (confidence: number) => Promise<unknown>
+  isFavorite: boolean
+  onToggleFavorite: () => Promise<unknown>
+}) {
+  const score = progress?.familiarityScore ?? 0
+  const label = getFamiliarityLabel(score)
+  const positiveEvidence = evidence.filter((item) => item.positive).slice(0, 2)
+  const missingEvidence = useMemo(() => {
+    const missing: string[] = []
+    if (!evidence.some((item) => item.evidenceType === 'practice_task')) missing.push('No practice task logged yet.')
+    if (!evidence.some((item) => item.evidenceType === 'confidence_checkin')) missing.push('No confidence check-in yet.')
+    if (!evidence.some((item) => item.evidenceType === 'maintenance_log')) missing.push('No maintenance evidence yet.')
+    return missing
+  }, [evidence])
 
   return (
     <Card>
       <CardTitle title="Explain My Score" />
       <p className="text-sm leading-6 text-bench-muted">
-        BenchXP should explain familiarity with evidence, not just a number.
+        BenchXP explains familiarity with evidence, not certification.
       </p>
-      <div className="mt-4 grid gap-3">
-        {evidenceRows.map(([label, detail]) => (
-          <div key={label} className="rounded-lg border border-bench-border bg-white/[0.025] p-3">
-            <p className="text-sm font-bold text-bench-text">{label}</p>
-            <p className="mt-1 text-sm leading-6 text-bench-muted">{detail}</p>
+      <div className="mt-4 rounded-xl border border-bench-orange/25 bg-bench-orange/10 p-4">
+        <div className="flex items-end justify-between gap-3">
+          <div>
+            <p className="text-3xl font-black text-bench-text">{score}</p>
+            <p className="text-sm text-bench-muted">{label}</p>
           </div>
-        ))}
+          <StatusPill label={`${progress?.xp ?? 0} XP`} tone="purple" />
+        </div>
       </div>
+      {error && (
+        <div className="mt-4 rounded-lg border border-bench-yellow/35 bg-bench-yellow/10 p-3 text-sm text-bench-yellow">
+          {error}
+        </div>
+      )}
+      <div className="mt-4 grid gap-3">
+        <EvidenceRow label="Positive evidence" detail={positiveEvidence.length > 0 ? positiveEvidence.map((item) => item.summary).join(' ') : 'Complete a guide step or practice task to create evidence.'} />
+        <EvidenceRow label="Missing evidence" detail={missingEvidence.length > 0 ? missingEvidence.join(' ') : 'Guide, practice, confidence, and maintenance evidence are all represented.'} />
+        <EvidenceRow label="Recommended next skill" detail={recommendations[0]?.detail ?? guide.practiceTasks[0]?.title ?? 'Complete one controlled practice task.'} />
+      </div>
+      <div className="mt-4">
+        <p className="mb-2 text-xs font-semibold uppercase text-bench-muted">Confidence check-in</p>
+        <div className="grid grid-cols-5 gap-2">
+          {[1, 2, 3, 4, 5].map((confidence) => (
+            <Button key={confidence} type="button" size="sm" variant="secondary" disabled={loading} aria-label={`Log ${confidence} out of 5 confidence`} onClick={() => void onConfidence(confidence)}>
+              {confidence}
+            </Button>
+          ))}
+        </div>
+      </div>
+      <Button className="mt-4 w-full" type="button" variant={isFavorite ? 'outline' : 'secondary'} disabled={loading} icon={<Star size={16} />} onClick={() => void onToggleFavorite()}>
+        {isFavorite ? 'Favorite guide' : 'Add to favorites'}
+      </Button>
     </Card>
   )
 }
 
-function PracticePanel({ guide }: { guide: ToolMasteryGuideContent }) {
+function EvidenceRow({ label, detail }: { label: string; detail: string }) {
+  return (
+    <div className="rounded-lg border border-bench-border bg-white/[0.025] p-3">
+      <p className="text-sm font-bold text-bench-text">{label}</p>
+      <p className="mt-1 text-sm leading-6 text-bench-muted">{detail}</p>
+    </div>
+  )
+}
+
+function PracticePanel({
+  guide,
+  disabled,
+  onLogPractice,
+  onLogMistake,
+  onLogMaintenance,
+}: {
+  guide: ToolMasteryGuideContent
+  disabled: boolean
+  onLogPractice: (taskIndex: number) => Promise<unknown>
+  onLogMistake: (mistakeKey: string) => Promise<unknown>
+  onLogMaintenance: () => Promise<unknown>
+}) {
   return (
     <Card>
       <CardTitle title="Practice Task" />
       <div className="space-y-4">
-        {guide.practiceTasks.map((task) => (
+        {guide.practiceTasks.map((task, index) => (
           <div key={task.title} className="rounded-xl border border-bench-border bg-white/[0.025] p-4">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <p className="font-bold text-bench-text">{task.title}</p>
@@ -266,9 +386,26 @@ function PracticePanel({ guide }: { guide: ToolMasteryGuideContent }) {
                 <StatusPill key={dimension} label={dimension} tone="muted" />
               ))}
             </div>
+            <Button className="mt-4 w-full" type="button" size="sm" variant="outline" disabled={disabled} onClick={() => void onLogPractice(index)}>
+              Log practice evidence
+            </Button>
           </div>
         ))}
       </div>
+      <div className="mt-5 border-t border-bench-border pt-4">
+        <p className="text-sm font-bold text-bench-text">Mistake patterns</p>
+        <p className="mt-1 text-sm leading-6 text-bench-muted">Optional, practical notes that improve recommendations.</p>
+        <div className="mt-3 flex flex-wrap gap-2">
+          {commonMistakes.map((mistake) => (
+            <Button key={mistake.key} type="button" size="sm" variant="secondary" disabled={disabled} onClick={() => void onLogMistake(mistake.key)}>
+              {mistake.label}
+            </Button>
+          ))}
+        </div>
+      </div>
+      <Button className="mt-4 w-full" type="button" variant="secondary" disabled={disabled} icon={<ClipboardCheck size={16} />} onClick={() => void onLogMaintenance()}>
+        Log maintenance review
+      </Button>
     </Card>
   )
 }
@@ -285,4 +422,8 @@ function riskTone(risk: ToolMasteryGuideContent['riskClass']) {
 
 function sectionId(title: string) {
   return title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+}
+
+function guideIdForToolType(toolTypeId: string) {
+  return `guide-${toolTypeId}`
 }

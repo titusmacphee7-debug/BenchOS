@@ -11,10 +11,18 @@
 ## Current Version
 
 ```text
-BenchOS v0.10
+BenchOS v0.11
 ```
 
 ## History
+
+### v0.11 - Server-Backed BenchXP Upgrade
+
+- Added Auth0-verified BenchXP API persistence through Netlify Functions.
+- Added Netlify Database tables for guide progress, XP evidence, practice logs, confidence check-ins, mistake logs, maintenance logs, favorite guides, roadmap progress, and readiness preferences.
+- Connected Tool Mastery, Tool Guides, Dashboard, Projects, Project Templates, My Tools, and Wishlist to server-backed BenchXP signals.
+- Added Balanced Warning readiness confidence without hard-blocking projects.
+- Preserved BenchXP as familiarity/readiness guidance, not certification.
 
 ### v0.10 - Netlify Database Runtime Connection Fix
 

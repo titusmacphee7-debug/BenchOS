@@ -8,9 +8,10 @@ import { PageHeader } from '../../components/ui/PageHeader'
 import { ProgressBar } from '../../components/ui/ProgressBar'
 import { StatCard } from '../../components/ui/StatCard'
 import { StatusPill } from '../../components/ui/StatusPill'
-import { completeMasteryGuideStep, startMasteryGuide } from '../../data/actions'
-import { useActiveUserTools, useMasteryGuides, useMasteryProgress, useRecentActivityFeed, useXpSummary } from '../../data/hooks'
-import type { MasteryGuide, MasteryProgress } from '../../data/schema'
+import { useActiveUserTools, useMasteryGuides } from '../../data/hooks'
+import type { MasteryGuide, MasteryGuideStep } from '../../data/schema'
+import { useBenchXp } from '../../lib/benchxp/useBenchXp'
+import type { BenchXpProgress } from '../../lib/benchxp/benchXpApi'
 import { getFamiliarityLabel } from '../../lib/guides/toolMasteryContent'
 
 const tabs = ['All Tools', 'Owned Tools', 'In Progress', 'Completed Guides']
@@ -18,10 +19,11 @@ const tabs = ['All Tools', 'Owned Tools', 'In Progress', 'Completed Guides']
 export function MasteryPage() {
   const [searchParams] = useSearchParams()
   const guides = useMasteryGuides()
-  const progress = useMasteryProgress()
   const tools = useActiveUserTools()
-  const xpSummary = useXpSummary()
-  const activity = useRecentActivityFeed(4)
+  const benchXp = useBenchXp()
+  const progress = benchXp.state.progress
+  const xpSummary = benchXp.state.summary
+  const activity = benchXp.state.events.slice(0, 4)
   const [activeTab, setActiveTab] = useState('All Tools')
   const [query, setQuery] = useState('')
   const [selectedGuideId, setSelectedGuideId] = useState<string>()
@@ -30,13 +32,13 @@ export function MasteryPage() {
   const rows = useMemo(() => guides
     .map((guide) => ({
       guide,
-      progress: progress.find((item) => item.guideId === guide.id),
+      progress: findGuideProgress(progress, guide.id),
       ownedTool: tools.find((tool) => tool.toolTypeId === guide.toolTypeId),
     }))
     .filter((row) => {
       if (activeTab === 'Owned Tools') return Boolean(row.ownedTool)
-      if (activeTab === 'In Progress') return row.progress?.status === 'In Progress'
-      if (activeTab === 'Completed Guides') return row.progress?.status === 'Mastered'
+      if (activeTab === 'In Progress') return row.progress?.status === 'in_progress'
+      if (activeTab === 'Completed Guides') return row.progress?.status === 'completed'
       return true
     })
     .filter((row) => [row.guide.toolName, row.guide.category, row.guide.summary].join(' ').toLowerCase().includes(query.toLowerCase()))
@@ -45,8 +47,8 @@ export function MasteryPage() {
 
   const requestedGuideId = requestedToolTypeId ? guides.find((guide) => guide.toolTypeId === requestedToolTypeId)?.id : undefined
   const selected = rows.find((row) => row.guide.id === (selectedGuideId ?? requestedGuideId)) ?? rows[0]
-  const completedGuideCount = progress.filter((item) => item.status === 'Mastered').length
-  const inProgress = progress.filter((item) => item.status === 'In Progress').length
+  const completedGuideCount = xpSummary.completedGuides
+  const inProgress = xpSummary.inProgressGuides
   const ownedGuideCount = guides.filter((guide) => tools.some((tool) => tool.toolTypeId === guide.toolTypeId)).length
 
   return (
@@ -81,6 +83,13 @@ export function MasteryPage() {
             <StatCard icon={TrendingUp} label="BenchXP" value={xpSummary.totalXp} detail={`Level ${xpSummary.level}`} tone="purple" />
           </div>
 
+          {benchXp.error && (
+            <Card className="border-bench-yellow/35 bg-bench-yellow/10">
+              <p className="text-sm font-semibold text-bench-yellow">BenchXP server progress is unavailable right now.</p>
+              <p className="mt-1 text-sm text-bench-muted">{benchXp.error}</p>
+            </Card>
+          )}
+
           <div className="flex flex-wrap gap-3 border-b border-bench-border">
             {tabs.map((tab) => (
               <button
@@ -103,7 +112,7 @@ export function MasteryPage() {
                 <Card key={guide.id} className={selected?.guide.id === guide.id ? 'border-bench-orange/50' : ''}>
                   <div className="grid gap-4 lg:grid-cols-[1fr_.65fr_.55fr_auto] lg:items-center">
                     <button type="button" className="flex min-w-0 items-center gap-4 text-left" onClick={() => setSelectedGuideId(guide.id)}>
-                      <IconTile icon={Wrench} size="lg" tone={guideProgress?.status === 'Mastered' ? 'green' : ownedTool ? 'orange' : 'muted'} />
+                      <IconTile icon={Wrench} size="lg" tone={guideProgress?.status === 'completed' ? 'green' : ownedTool ? 'orange' : 'muted'} />
                       <div className="min-w-0">
                         <p className="font-semibold text-bench-text">{guide.toolName}</p>
                         <p className="text-sm text-bench-muted">{guide.summary}</p>
@@ -114,21 +123,22 @@ export function MasteryPage() {
                       </div>
                     </button>
                     <div>
-                      <p className={guideProgress?.status === 'Mastered' ? 'text-bench-green' : 'text-bench-orange'}>
+                      <p className={guideProgress?.status === 'completed' ? 'text-bench-green' : 'text-bench-orange'}>
                         {progressStatusLabel(guide, guideProgress)}
                       </p>
-                      <ProgressBar className="mt-2" value={percent} tone={guideProgress?.status === 'Mastered' ? 'green' : 'orange'} />
+                      <ProgressBar className="mt-2" value={percent} tone={guideProgress?.status === 'completed' ? 'green' : 'orange'} />
                     </div>
                     <p className="text-sm text-bench-muted">{guideProgress?.xp ?? 0} XP</p>
                     <Button
                       variant={guideProgress ? 'secondary' : 'outline'}
                       icon={guideProgress ? <Play size={16} /> : <Lock size={16} />}
+                      disabled={benchXp.loading}
                       onClick={() => {
                         setSelectedGuideId(guide.id)
-                        if (!guideProgress) void startMasteryGuide(guide.id, ownedTool?.id)
+                        if (!guideProgress) void benchXp.startGuide({ guideId: guide.id, toolTypeId: guide.toolTypeId, userToolId: ownedTool?.id })
                       }}
                     >
-                      {guideProgress?.status === 'Mastered' ? 'Review' : guideProgress ? 'Continue' : 'Start Guide'}
+                      {guideProgress?.status === 'completed' ? 'Review' : guideProgress ? 'Continue' : 'Start Guide'}
                     </Button>
                   </div>
                 </Card>
@@ -158,18 +168,34 @@ export function MasteryPage() {
             ))}
           </Card>
 
-          {selected && <GuideDetail guide={selected.guide} progress={selected.progress} userToolId={selected.ownedTool?.id} />}
+          {selected && (
+            <GuideDetail
+              guide={selected.guide}
+              progress={selected.progress}
+              disabled={benchXp.loading}
+              onCompleteStep={(step) => benchXp.completeStep({
+                guideId: selected.guide.id,
+                toolTypeId: selected.guide.toolTypeId,
+                userToolId: selected.ownedTool?.id,
+                stepId: step.id,
+                stepTitle: step.title,
+                stepCategory: step.category,
+                totalStepCount: selected.guide.steps.length,
+              })}
+            />
+          )}
 
           <Card>
             <CardTitle title="Recent Activity" />
+            {activity.length === 0 && <p className="text-sm text-bench-muted">BenchXP evidence will appear here as you complete guide steps, practice tasks, confidence check-ins, and maintenance logs.</p>}
             {activity.map((item) => (
               <div key={item.id} className="mt-4 flex items-start gap-3">
-                <IconTile icon={Star} tone={item.tone} size="sm" />
+                <IconTile icon={Star} tone="purple" size="sm" />
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-semibold">{item.title}</p>
+                  <p className="text-sm font-semibold">{benchXpActivityTitle(item.sourceType)}</p>
                   <p className="text-sm text-bench-muted">{item.description}</p>
                 </div>
-                <span className="text-xs text-bench-muted">{formatDate(item.timestamp)}</span>
+                <span className="text-xs text-bench-muted">{formatDate(item.createdAt)}</span>
               </div>
             ))}
           </Card>
@@ -179,7 +205,17 @@ export function MasteryPage() {
   )
 }
 
-function GuideDetail({ guide, progress, userToolId }: { guide: MasteryGuide; progress?: MasteryProgress; userToolId?: string }) {
+function GuideDetail({
+  guide,
+  progress,
+  disabled,
+  onCompleteStep,
+}: {
+  guide: MasteryGuide
+  progress?: BenchXpProgress
+  disabled?: boolean
+  onCompleteStep: (step: MasteryGuideStep) => Promise<unknown>
+}) {
   const completed = new Set(progress?.completedStepIds ?? [])
   const nextStep = guide.steps.find((step) => !completed.has(step.id))
 
@@ -201,7 +237,7 @@ function GuideDetail({ guide, progress, userToolId }: { guide: MasteryGuide; pro
         ))}
       </div>
       {nextStep ? (
-        <Button className="mt-5 w-full" variant="primary" icon={<CheckCircle2 size={16} />} onClick={() => void completeMasteryGuideStep(guide.id, nextStep.id, userToolId)}>
+        <Button className="mt-5 w-full" variant="primary" icon={<CheckCircle2 size={16} />} disabled={disabled} onClick={() => void onCompleteStep(nextStep)}>
           Complete Next Step
         </Button>
       ) : (
@@ -211,17 +247,32 @@ function GuideDetail({ guide, progress, userToolId }: { guide: MasteryGuide; pro
   )
 }
 
-function progressStatusLabel(guide: MasteryGuide, progress?: MasteryProgress) {
+function progressStatusLabel(guide: MasteryGuide, progress?: BenchXpProgress) {
   if (!progress) return 'Not Started'
   const percent = Math.round((progress.completedStepIds.length / Math.max(1, guide.steps.length)) * 100)
   const familiarity = getFamiliarityLabel(percent)
-  if (progress.status === 'Mastered') return `Completed Guide - ${familiarity}`
-  if (progress.status === 'In Progress') return `${familiarity} - Level ${progress.level}`
+  const level = Math.floor(progress.xp / 500) + 1
+  if (progress.status === 'completed') return `Completed Guide - ${familiarity}`
+  if (progress.status === 'in_progress') return `${familiarity} - Level ${level}`
   return `${familiarity} - Not Started`
+}
+
+function findGuideProgress(progress: BenchXpProgress[], guideId: string) {
+  return progress.find((item) => item.guideId === guideId)
 }
 
 function formatDate(value: string) {
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return value
   return date.toLocaleDateString()
+}
+
+function benchXpActivityTitle(sourceType: string) {
+  if (sourceType === 'guide_step') return 'Guide step completed'
+  if (sourceType === 'guide_complete') return 'Guide completed'
+  if (sourceType === 'practice_task') return 'Practice logged'
+  if (sourceType === 'confidence_checkin') return 'Confidence check-in'
+  if (sourceType === 'mistake_log') return 'Mistake pattern logged'
+  if (sourceType === 'maintenance_log') return 'Maintenance evidence'
+  return 'BenchXP evidence'
 }

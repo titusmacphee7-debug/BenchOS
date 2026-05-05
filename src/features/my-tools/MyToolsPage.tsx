@@ -1,7 +1,8 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Briefcase, Clock, Edit3, Plus, Trash2, Wrench, Zap } from 'lucide-react'
+import { BookOpen, Briefcase, Clock, Edit3, Plus, Trash2, Wrench, Zap } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { useForm } from 'react-hook-form'
+import { useNavigate } from 'react-router-dom'
 import { MaintenanceFormModal } from '../../components/logging/MaintenanceFormModal'
 import { ToolUsageFormModal } from '../../components/logging/ToolUsageFormModal'
 import { ToolPicker } from '../../components/tool-picker/ToolPicker'
@@ -46,6 +47,7 @@ type ToolFilterState = {
 }
 
 export function MyToolsPage() {
+  const navigate = useNavigate()
   const tools = useActiveUserTools()
   const [selectedId, setSelectedId] = useState<string>()
   const [page, setPage] = useState(1)
@@ -227,6 +229,9 @@ export function MyToolsPage() {
                 </div>
                 <div className="mt-5 grid gap-2">
                   <Button variant="primary" icon={<Edit3 size={18} />} onClick={() => setModalState({ mode: 'edit', tool: selectedTool })}>Edit Tool</Button>
+                  {selectedTool.toolTypeId && (
+                    <Button variant="outline" icon={<BookOpen size={18} />} onClick={() => navigate(`/tool-guides/${selectedTool.toolTypeId}`)}>Open Tool Guide</Button>
+                  )}
                   <Button icon={<Clock size={18} />} onClick={() => setUsageModalOpen(true)}>Log Tool Use</Button>
                   <Button icon={<Wrench size={18} />} onClick={() => setMaintenanceModalOpen(true)}>Log Maintenance</Button>
                 </div>

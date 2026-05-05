@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { CheckSquare, Edit3, Heart, Package, Plus, ShoppingCart, Trash2, Wrench } from 'lucide-react'
+import { BookOpen, CheckSquare, Edit3, Heart, Package, Plus, ShoppingCart, Trash2, Wrench } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import { useNavigate } from 'react-router-dom'
@@ -112,6 +112,7 @@ export function WishlistPage() {
                   {item.status}
                 </div>
                 <div className="flex items-center gap-2">
+                  {item.toolTypeId && <Button size="sm" variant="secondary" icon={<BookOpen size={15} />} onClick={() => navigate(`/tool-guides/${item.toolTypeId}`)}>Guide</Button>}
                   {item.status === 'Not Purchased' && <Button size="sm" variant="outline" icon={<CheckSquare size={15} />} onClick={() => void markWishlistPurchased(item.id)}>Mark Purchased</Button>}
                   {item.status === 'Purchased' && <Button size="sm" variant="primary" onClick={() => setConversionItem(item)}>Convert</Button>}
                   <Button size="icon" variant="secondary" aria-label="Edit wishlist item" onClick={() => { setModalItem(item); setModalOpen(true) }}><Edit3 size={16} /></Button>

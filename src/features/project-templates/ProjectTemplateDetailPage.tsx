@@ -6,6 +6,8 @@ import { Card, CardTitle } from '../../components/ui/Card'
 import { StatusPill } from '../../components/ui/StatusPill'
 import { addMissingTemplateItemsToWishlist, createProjectFromTemplate } from '../../data/actions'
 import { useActiveMaterials, useActiveUserTools, useAllToolTypeCapabilities, useProjectTemplateData } from '../../data/hooks'
+import { calculateReadinessConfidence } from '../../lib/benchxp/readinessConfidence'
+import { useBenchXp } from '../../lib/benchxp/useBenchXp'
 import { calculateProjectTemplateReadiness } from '../../lib/projects/projectTemplateReadiness'
 
 export function ProjectTemplateDetailPage() {
@@ -15,6 +17,7 @@ export function ProjectTemplateDetailPage() {
   const tools = useActiveUserTools()
   const materials = useActiveMaterials()
   const toolTypeCapabilities = useAllToolTypeCapabilities()
+  const benchXp = useBenchXp()
   const [notice, setNotice] = useState('')
   const template = templates.find((item) => item.id === templateId)
   const templateRequirements = useMemo(
@@ -28,6 +31,11 @@ export function ProjectTemplateDetailPage() {
     materials,
     toolTypeCapabilities,
   }) : undefined, [materials, template, templateRequirements, toolTypeCapabilities, tools])
+  const readinessConfidence = useMemo(() => calculateReadinessConfidence({
+    requirements: templateRequirements,
+    ownedToolTypeIds: tools.map((tool) => tool.toolTypeId).filter((toolTypeId): toolTypeId is string => Boolean(toolTypeId)),
+    progress: benchXp.state.progress,
+  }), [benchXp.state.progress, templateRequirements, tools])
 
   if (!template) return <Navigate to="/project-templates" replace />
 
@@ -94,6 +102,14 @@ export function ProjectTemplateDetailPage() {
                 <p key={item.requirementId} className="rounded-lg border border-bench-border bg-white/[0.025] px-3 py-2">{item.name}</p>
               ))}
               {missingCount === 0 && <p className="text-bench-green">Your current workshop can handle the required pieces.</p>}
+              {readinessConfidence.warnings.slice(0, 2).map((warning) => (
+                <p key={warning.id} className="rounded-lg border border-bench-yellow/30 bg-bench-yellow/10 px-3 py-2 text-bench-yellow">
+                  {warning.title}
+                </p>
+              ))}
+              {readinessConfidence.weakestLink && (
+                <p className="text-xs text-bench-muted">Weakest BenchXP signal: {readinessConfidence.weakestLink.detail}</p>
+              )}
             </div>
           </Card>
           <Card>
