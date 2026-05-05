@@ -365,18 +365,123 @@ function GuideSectionCard({ title, items }: { title: string; items: string[] }) 
         <IconTile icon={Icon} tone={title.includes('Mistakes') || title.includes('Warnings') ? 'yellow' : 'orange'} />
         <div className="min-w-0 flex-1">
           <h2 className="text-xl font-bold text-bench-text">{title}</h2>
-          <ul className="mt-4 grid gap-3">
-            {items.map((item) => (
-              <li key={item} className="flex gap-3 rounded-lg border border-bench-border bg-white/[0.025] p-3 text-sm leading-6 text-bench-muted">
-                <CheckCircle2 className="mt-1 shrink-0 text-bench-orange" size={16} />
-                <span>{item}</span>
-              </li>
+          <p className="mt-2 max-w-3xl text-sm leading-7 text-bench-muted">{guideSectionIntro(title)}</p>
+          <div className="mt-4 grid gap-3">
+            {items.map((item, index) => (
+              <article key={`${title}-${item}`} className="rounded-xl border border-bench-border bg-white/[0.025] p-4">
+                <div className="flex items-start gap-3">
+                  <CheckCircle2 className="mt-1 shrink-0 text-bench-orange" size={16} />
+                  <div>
+                    <h3 className="text-sm font-bold text-bench-text">{guideSectionItemTitle(title, item, index)}</h3>
+                    <p className="mt-2 text-sm leading-7 text-bench-muted">{guideSectionItemBody(title, item)}</p>
+                  </div>
+                </div>
+              </article>
             ))}
-          </ul>
+          </div>
         </div>
       </div>
     </Card>
   )
+}
+
+function guideSectionIntro(title: string) {
+  const intros: Record<string, string> = {
+    'Safety First': 'Start here before the tool comes out. These notes turn safety into a practical pre-work habit instead of a vague warning at the edge of the page.',
+    PPE: 'Protective gear works best when it is part of setup. Treat these items as baseline conditions for the task, especially when dust, chips, noise, or awkward body position are involved.',
+    Setup: 'Good setup is where most project mistakes are prevented. Slow down here, confirm the tool and workpiece are ready, then make the actual cut, hole, or fastening step simpler.',
+    'Basic Use': 'These are the working habits that keep the tool predictable. Move deliberately, check your position, and give yourself room to stop before a small drift becomes a project problem.',
+    'Common Mistakes': 'These patterns are common because they happen fast. Use them as early warning signs: pause, reset the setup, and continue only when the cause is clear.',
+    Accessories: 'Accessories should earn their place by improving control, safety, compatibility, or repeatability. BenchOS treats them as readiness helpers, not random add-ons.',
+    Consumables: 'Consumables affect results more than they seem to. The right bit, blade, disc, filter, or fastener can be the difference between clean progress and frustrating rework.',
+    Maintenance: 'Maintenance keeps the tool predictable for the next project. These are small closeout habits that protect accuracy, safety, and confidence over time.',
+    Comparisons: 'Similar tools overlap, but they are not interchangeable in every situation. Use these comparisons to choose the tool that fits the work instead of forcing one tool into every role.',
+    Substitutions: 'Substitutions are useful when the ideal tool is missing, but they come with tradeoffs. Pick the option that keeps the work stable and the result honest.',
+    'Project Examples': 'These examples show where the guide turns into real work. A project can use the guide as a readiness signal before you start cutting, drilling, fastening, or finishing.',
+    'Buying Notes': 'Use these notes as filters before buying. The goal is to buy capability you will actually use, not to collect features that do not change your workshop readiness.',
+    Troubleshooting: 'When something feels off, do not just push through it. Use troubleshooting as a reset loop: stop, inspect the setup, correct the cause, and then continue.',
+    'Storage + Care': 'Storage is part of tool readiness. A tool that is clean, protected, and easy to find is more likely to be used safely and accurately.',
+    'Shop Card Checklist': 'This is the quick pre-project version of the guide. It is short on purpose, but each line should still be treated as a real pause point before work begins.',
+    'Readiness Warnings': 'BenchOS uses these as Balanced Warnings, not hard gates. They tell you where confidence, safety, or setup could improve before the project starts.',
+    'Practice Task': 'Practice turns guide reading into evidence. Focus on controlled, repeatable results instead of speed, then log the task when it teaches you something real.',
+    Overview: 'Use this as the practical overview before going deeper. It explains what the tool is for and what kind of control BenchOS expects before project work.',
+    'Best Uses': 'These are strong fits for the tool. When a project matches these uses, the guide can help you turn ownership into better readiness and cleaner execution.',
+    'When Not To Use It': 'Knowing when to stop is part of tool familiarity. If one of these conditions is present, improve the setup or choose a safer tool for the job.',
+  }
+  return intros[title] ?? 'Use these notes as practical guide context before you apply the tool to real project work.'
+}
+
+function guideSectionItemTitle(title: string, item: string, index: number) {
+  const clean = removeTrailingPunctuation(item.trim())
+  if (title === 'Practice Task') return clean.split(':')[0] || `Practice note ${index + 1}`
+  if (title === 'Readiness Warnings') return `Readiness note ${index + 1}`
+  if (title === 'Common Mistakes') return `Watch for: ${lowerFirst(clean)}`
+  if (title === 'When Not To Use It') return `Avoid when: ${lowerFirst(clean)}`
+  if (clean.length <= 52) return capitalizeFirst(clean)
+  return `${capitalizeFirst(clean.split(' ').slice(0, 8).join(' '))}...`
+}
+
+function guideSectionItemBody(title: string, item: string) {
+  const clean = ensureSentence(capitalizeFirst(item.trim()))
+  switch (title) {
+    case 'Safety First':
+    case 'PPE':
+      return `${clean} Treat this as part of the setup, not something you remember halfway through the job. Confirm it before the tool starts, keep it in place through cleanup, and check the tool manual when the task or material changes.`
+    case 'Setup':
+      return `${clean} This step reduces wandering, poor fit, unstable workholding, and rushed corrections once the project is underway. A slower setup usually creates a faster and cleaner result.`
+    case 'Basic Use':
+      return `${clean} Keep the pace controlled enough that you can stop, inspect the result, and correct course before the mistake becomes part of the project.`
+    case 'Common Mistakes':
+      return `${clean} If you notice this pattern, pause and reset the setup instead of repeating it. BenchXP treats mistake awareness as useful evidence because it points to the next practice target.`
+    case 'Accessories':
+      return `${clean} Add this when it improves control, compatibility, safety, or repeatability for the work you actually plan to do. It should solve a real readiness gap.`
+    case 'Consumables':
+      return `${clean} Check that it matches the material and task before you start. Worn, mismatched, or missing consumables can make a good tool feel inaccurate or unsafe.`
+    case 'Maintenance':
+      return `${clean} Make it a normal closeout habit after the tool is used. Small maintenance checks keep the next project from starting with hidden friction.`
+    case 'Comparisons':
+      return `${clean} Use that comparison to choose the tool that fits the job, especially when accuracy, force, dust, support, or repeatability matter.`
+    case 'Substitutions':
+      return `${clean} A substitute can work, but the setup may need more patience or a narrower task scope. Use it only when the result and safety conditions still make sense.`
+    case 'Project Examples':
+      return `${clean} This is the kind of project where the guide can become a readiness signal, especially when your inventory, accessories, and practice evidence line up.`
+    case 'Buying Notes':
+      return `${clean} Use this as a buying filter before adding the item to your wishlist. The best purchase is the one that closes a real project or safety gap.`
+    case 'Troubleshooting':
+      return `${clean} Treat the symptom as feedback from the setup, material, or technique. Stop long enough to inspect the likely cause before you continue.`
+    case 'Storage + Care':
+      return `${clean} Good storage protects accuracy and makes the tool easier to trust when the next project starts.`
+    case 'Shop Card Checklist':
+      return `${clean} Confirm this in the last minute before work begins. The checklist is short so it can be used at the bench, not ignored like a long manual.`
+    case 'Readiness Warnings':
+      return `${clean} BenchOS shows this as a warning, not a hard block, so you can decide whether to practice, add an accessory, improve setup, or proceed carefully.`
+    case 'Practice Task':
+      return `${clean} Treat the task as evidence: repeat the motion, inspect the result, and log it only when it tells you something about control, setup, or confidence.`
+    case 'Best Uses':
+      return `${clean} This is a strong fit because the tool can improve control, repeatability, or speed without pretending every job needs the same approach.`
+    case 'When Not To Use It':
+      return `${clean} Stop and choose a better setup, a different tool, or more practice time before forcing the task forward.`
+    default:
+      return `${clean} Use this note as practical context before applying the guide to a real BenchOS project.`
+  }
+}
+
+function ensureSentence(value: string) {
+  return /[.!?]$/.test(value) ? value : `${value}.`
+}
+
+function removeTrailingPunctuation(value: string) {
+  return value.replace(/[.!?]+$/, '')
+}
+
+function capitalizeFirst(value: string) {
+  if (!value) return value
+  return `${value.charAt(0).toUpperCase()}${value.slice(1)}`
+}
+
+function lowerFirst(value: string) {
+  if (!value) return value
+  return `${value.charAt(0).toLowerCase()}${value.slice(1)}`
 }
 
 function BenchXpPanel({
