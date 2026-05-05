@@ -31,6 +31,23 @@ export default defineConfig({
       },
     }),
   ],
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (!id.includes('node_modules')) return undefined
+          if (id.includes('dexie')) return 'vendor-storage'
+          if (id.includes('react-router')) return 'vendor-router'
+          if (id.includes('react') || id.includes('scheduler')) return 'vendor-react'
+          if (id.includes('@auth0')) return 'vendor-auth'
+          if (id.includes('react-hook-form') || id.includes('@hookform') || id.includes('zod')) return 'vendor-forms'
+          if (id.includes('minisearch')) return 'vendor-search'
+          if (id.includes('lucide-react')) return 'vendor-icons'
+          return 'vendor'
+        },
+      },
+    },
+  },
   test: {
     environment: 'jsdom',
     setupFiles: './src/test/setup.ts',

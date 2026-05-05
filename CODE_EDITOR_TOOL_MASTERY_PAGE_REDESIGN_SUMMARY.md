@@ -6,6 +6,9 @@ Implemented the Tool Mastery / BenchXP overview redesign and upgraded the indivi
 
 ## Files Changed
 
+- `vite.config.ts`
+  - Added Rollup manual chunk splitting for shared vendor libraries so the production build no longer emits the large `index` chunk warning.
+
 - `TOOL_MASTERY_PAGE_REDESIGN_PLAN.md`
   - Added the implementation plan for the Tool Mastery and guide page redesign.
 
@@ -39,11 +42,11 @@ Implemented the Tool Mastery / BenchXP overview redesign and upgraded the indivi
 
 - `npm run lint` - passed.
 - `npm run test` - passed, 18 test files and 86 tests.
-- `npm run build` - passed.
+- `npm run build` - passed with no large chunk warning.
 
 ## Remaining Warnings
 
-- Vite still reports the existing large `index` chunk warning after minification. This is not a build failure.
+- None from the current verification pass.
 
 ## Manual Testing Notes
 
