@@ -2,7 +2,8 @@ import { getDatabase } from '@netlify/database'
 
 function databasePool() {
   try {
-    return getDatabase().pool
+    const connectionString = process.env.NETLIFY_DB_URL || process.env.NETLIFY_DATABASE_URL
+    return getDatabase(connectionString ? { connectionString } : undefined).pool
   } catch (caught) {
     const error = new Error('Netlify Database is not initialized for this site. Run the Netlify Database setup flow, then redeploy so migrations can run.')
     error.statusCode = 500
