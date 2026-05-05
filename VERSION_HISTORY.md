@@ -5,16 +5,21 @@
 - Every committed app/source-code change must increase the visible BenchOS app version by `0.01`.
 - The app version is tracked in `src/lib/version.ts`.
 - The sidebar and Settings page read from that shared version file.
-- `package.json` uses npm-safe semver, so app `v0.06` is represented as package version `0.0.6`.
+- `package.json` uses npm-safe semver, so app `v0.07` is represented as package version `0.0.7`.
 - Coordinator, Planner, and implementation summaries should mention the current app version after each code-changing task.
 
 ## Current Version
 
 ```text
-BenchOS v0.06
+BenchOS v0.07
 ```
 
 ## History
+
+### v0.07 - Remove Stale Auth0 Setup Warning
+
+- Removed the hardcoded Auth0 dashboard setup reminder from the login and sign-up panels now that Auth0 is configured and working.
+- Preserved Auth0 login, Auth0 sign-up, Supabase fallback forms, and routing behavior.
 
 ### v0.06 - HTTPS Browser Hardening
 

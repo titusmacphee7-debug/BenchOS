@@ -273,11 +273,6 @@ function AuthPanel({ title, description, mode }: { title: string; description: s
             >
               {mode === 'signup' ? 'Continue with Auth0 sign up' : 'Continue with Auth0'}
             </Button>
-            <p className="rounded-lg border border-bench-orange/25 bg-bench-orange/10 p-3 text-xs leading-5 text-bench-orange">
-              Auth0 dashboard setup still needs these exact Allowed Callback URL, Logout URL, and Web Origin entries:
-              {' '}
-              {auth0.requiredOrigins.callbacks.join(', ')}.
-            </p>
             {auth0.error && <p className="rounded-lg border border-bench-red/30 bg-bench-red/10 p-3 text-sm text-bench-red">{auth0.error.message}</p>}
           </div>
         )}

@@ -17,7 +17,7 @@ This file keeps the BenchOS Codex chats coordinated and safe. Use plain language
 - Real BenchOS app folder: `C:\Users\slaye\Documents\Codex\BenchOS`.
 - Launcher folder: `C:\Users\slaye\OneDrive\Documents\New project`.
 - Main branch: `main`.
-- Current tracked app version: `v0.06`.
+- Current tracked app version: `v0.07`.
 - Version rule: every committed app/source-code change must increase the visible app version by `0.01`.
 - Shared version source: `src/lib/version.ts`.
 - The main folder is the trusted coordination and review folder.
@@ -167,3 +167,9 @@ Paste future chat summaries below this line.
 - Live server check showed Netlify serving HTTPS with HSTS and a valid Let's Encrypt certificate.
 - Added Netlify headers to upgrade insecure subrequests and block mixed content.
 - Version bumped from `v0.05` to `v0.06`.
+
+### v0.07 Auth0 Warning Cleanup Entry
+
+- Owner confirmed Auth0 works after adding dashboard URLs.
+- Removed the stale hardcoded setup reminder from the login/sign-up UI.
+- Version bumped from `v0.06` to `v0.07`.
