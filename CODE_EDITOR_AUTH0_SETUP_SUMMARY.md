@@ -94,6 +94,10 @@ Integrated the official Auth0 React SDK into the existing BenchOS Vite app witho
 - `npm run build`
 - `git diff --stat`
 - `git diff --check`
+- `git commit -m "Add Auth0 login integration"`
+- `git push origin main`
+- Netlify project/deploy status lookup
+- `Invoke-WebRequest -Uri 'https://appbenchos.com' -UseBasicParsing -TimeoutSec 30`
 
 ## Command Results
 
@@ -102,6 +106,14 @@ Integrated the official Auth0 React SDK into the existing BenchOS Vite app witho
 - `npm run test` passed: 17 test files, 79 tests.
 - `npm run build` passed.
 - `git diff --check` passed.
+- Commit created: `561e8cb0bd7c0208f33205c8519416d02cf78f14`.
+- Push to `origin/main` succeeded.
+- Netlify production deploy succeeded:
+  - Deploy ID: `69f9630926c78f0008d17bcf`
+  - State: `ready`
+  - URL: `https://appbenchos.com`
+  - Commit: `561e8cb0bd7c0208f33205c8519416d02cf78f14`
+- Live URL check returned HTTP `200` with page title `BenchOS`.
 
 ## Remaining Warnings / Errors
 
@@ -120,7 +132,7 @@ Allowed Web Origins:   http://localhost:5173, http://127.0.0.1:5173, https://app
 
 ## Manual Netlify Steps Still Required
 
-- Push/deploy this commit to Netlify.
+- No manual deploy step remains for commit `561e8cb0bd7c0208f33205c8519416d02cf78f14`; Netlify deployed it successfully.
 - Optional: add `VITE_AUTH0_DOMAIN` and `VITE_AUTH0_CLIENT_ID` in Netlify if you want Netlify to control the public Auth0 config.
 - Do not add Auth0 client secrets to this frontend app.
 
