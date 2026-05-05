@@ -7,7 +7,7 @@ import { ProgressBar } from '../../components/ui/ProgressBar'
 import { StatusPill } from '../../components/ui/StatusPill'
 import { useWorkshopDiagnostics } from '../../data/hooks'
 import type { WorkshopCapabilityScore } from '../../data/schema'
-import type { StatusTone } from '../../data/mock/types'
+import type { StatusTone } from '../../lib/types/status'
 
 export function WorkshopScorePage() {
   const { gapAnalysis, workshopScore } = useWorkshopDiagnostics()

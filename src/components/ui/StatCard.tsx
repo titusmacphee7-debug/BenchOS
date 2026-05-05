@@ -1,5 +1,5 @@
 import type { LucideIcon } from 'lucide-react'
-import type { StatusTone } from '../../data/mock/types'
+import type { StatusTone } from '../../lib/types/status'
 import { Card } from './Card'
 import { IconTile } from './IconTile'
 

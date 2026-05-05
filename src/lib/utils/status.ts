@@ -1,4 +1,4 @@
-import type { StatusTone } from '../../data/mock/types'
+import type { StatusTone } from '../types/status'
 
 export function readinessTone(status: string): StatusTone {
   if (status === 'Buildable Now') return 'green'

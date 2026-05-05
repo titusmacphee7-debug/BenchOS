@@ -1,4 +1,4 @@
-import type { StatusTone } from '../../data/mock/types'
+import type { StatusTone } from '../../lib/types/status'
 import { cn } from '../../lib/utils/cn'
 
 const toneClass: Record<StatusTone, string> = {

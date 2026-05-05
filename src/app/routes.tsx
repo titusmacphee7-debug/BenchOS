@@ -1,24 +1,58 @@
+import { lazy, Suspense, type ReactNode } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { AppShell } from '../components/layout/AppShell'
 import { useAccountOnboardingStatus, useOnboardingStatus } from '../data/hooks'
-import { AccountOnboardingPage } from '../features/auth/AccountOnboardingPage'
-import { AccountPage, LocalModePage, LoginPage, ResetPasswordPage, SignupPage } from '../features/auth/AuthPages'
-import { DashboardPage } from '../features/dashboard/DashboardPage'
-import { GapAnalyzerPage } from '../features/gap-analyzer/GapAnalyzerPage'
-import { MaterialsPage } from '../features/materials/MaterialsPage'
-import { MasteryPage } from '../features/mastery/MasteryPage'
-import { MyToolsPage } from '../features/my-tools/MyToolsPage'
-import { OnboardingPage } from '../features/onboarding/OnboardingPage'
-import { ProjectDetailPage } from '../features/projects/ProjectDetailPage'
-import { ProjectsPage } from '../features/projects/ProjectsPage'
-import { ProjectTemplateDetailPage } from '../features/project-templates/ProjectTemplateDetailPage'
-import { ProjectTemplatesPage } from '../features/project-templates/ProjectTemplatesPage'
-import { BuyingPreferencesPage } from '../features/settings/BuyingPreferencesPage'
-import { SettingsPage } from '../features/settings/SettingsPage'
-import { ToolGuidePage } from '../features/tool-guides/ToolGuidePage'
-import { ToolLibraryPage } from '../features/tool-library/ToolLibraryPage'
-import { WishlistPage } from '../features/wishlist/WishlistPage'
-import { WorkshopScorePage } from '../features/workshop-score/WorkshopScorePage'
+
+const AccountOnboardingPage = lazy(() =>
+  import('../features/auth/AccountOnboardingPage').then((module) => ({ default: module.AccountOnboardingPage })),
+)
+const AccountPage = lazy(() => import('../features/auth/AuthPages').then((module) => ({ default: module.AccountPage })))
+const LocalModePage = lazy(() => import('../features/auth/AuthPages').then((module) => ({ default: module.LocalModePage })))
+const LoginPage = lazy(() => import('../features/auth/AuthPages').then((module) => ({ default: module.LoginPage })))
+const ResetPasswordPage = lazy(() => import('../features/auth/AuthPages').then((module) => ({ default: module.ResetPasswordPage })))
+const SignupPage = lazy(() => import('../features/auth/AuthPages').then((module) => ({ default: module.SignupPage })))
+const DashboardPage = lazy(() => import('../features/dashboard/DashboardPage').then((module) => ({ default: module.DashboardPage })))
+const GapAnalyzerPage = lazy(() =>
+  import('../features/gap-analyzer/GapAnalyzerPage').then((module) => ({ default: module.GapAnalyzerPage })),
+)
+const MaterialsPage = lazy(() => import('../features/materials/MaterialsPage').then((module) => ({ default: module.MaterialsPage })))
+const MasteryPage = lazy(() => import('../features/mastery/MasteryPage').then((module) => ({ default: module.MasteryPage })))
+const MyToolsPage = lazy(() => import('../features/my-tools/MyToolsPage').then((module) => ({ default: module.MyToolsPage })))
+const OnboardingPage = lazy(() => import('../features/onboarding/OnboardingPage').then((module) => ({ default: module.OnboardingPage })))
+const ProjectDetailPage = lazy(() =>
+  import('../features/projects/ProjectDetailPage').then((module) => ({ default: module.ProjectDetailPage })),
+)
+const ProjectsPage = lazy(() => import('../features/projects/ProjectsPage').then((module) => ({ default: module.ProjectsPage })))
+const ProjectTemplateDetailPage = lazy(() =>
+  import('../features/project-templates/ProjectTemplateDetailPage').then((module) => ({ default: module.ProjectTemplateDetailPage })),
+)
+const ProjectTemplatesPage = lazy(() =>
+  import('../features/project-templates/ProjectTemplatesPage').then((module) => ({ default: module.ProjectTemplatesPage })),
+)
+const BuyingPreferencesPage = lazy(() =>
+  import('../features/settings/BuyingPreferencesPage').then((module) => ({ default: module.BuyingPreferencesPage })),
+)
+const SettingsPage = lazy(() => import('../features/settings/SettingsPage').then((module) => ({ default: module.SettingsPage })))
+const ToolGuidePage = lazy(() => import('../features/tool-guides/ToolGuidePage').then((module) => ({ default: module.ToolGuidePage })))
+const ToolLibraryPage = lazy(() =>
+  import('../features/tool-library/ToolLibraryPage').then((module) => ({ default: module.ToolLibraryPage })),
+)
+const WishlistPage = lazy(() => import('../features/wishlist/WishlistPage').then((module) => ({ default: module.WishlistPage })))
+const WorkshopScorePage = lazy(() =>
+  import('../features/workshop-score/WorkshopScorePage').then((module) => ({ default: module.WorkshopScorePage })),
+)
+
+function routeElement(element: ReactNode) {
+  return <Suspense fallback={<RouteLoadingFallback />}>{element}</Suspense>
+}
+
+function RouteLoadingFallback() {
+  return (
+    <div className="panel-surface rounded-xl p-5 text-sm text-bench-muted" role="status" aria-live="polite">
+      Loading workshop view...
+    </div>
+  )
+}
 
 export function AppRoutes() {
   const onboarding = useOnboardingStatus()
@@ -38,14 +72,14 @@ export function AppRoutes() {
   if (!onboarding.complete) {
     return (
       <Routes>
-        <Route path="/onboarding" element={<OnboardingPage />} />
+        <Route path="/onboarding" element={routeElement(<OnboardingPage />)} />
         <Route element={<AppShell />}>
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/signup" element={<SignupPage />} />
-          <Route path="/reset-password" element={<ResetPasswordPage />} />
-          <Route path="/account" element={<AccountPage />} />
-          <Route path="/account-onboarding" element={<AccountOnboardingPage />} />
-          <Route path="/local-mode" element={<LocalModePage />} />
+          <Route path="/login" element={routeElement(<LoginPage />)} />
+          <Route path="/signup" element={routeElement(<SignupPage />)} />
+          <Route path="/reset-password" element={routeElement(<ResetPasswordPage />)} />
+          <Route path="/account" element={routeElement(<AccountPage />)} />
+          <Route path="/account-onboarding" element={routeElement(<AccountOnboardingPage />)} />
+          <Route path="/local-mode" element={routeElement(<LocalModePage />)} />
         </Route>
         <Route path="*" element={<Navigate to="/onboarding" replace />} />
       </Routes>
@@ -56,9 +90,9 @@ export function AppRoutes() {
     return (
       <Routes>
         <Route element={<AppShell />}>
-          <Route path="/account-onboarding" element={<AccountOnboardingPage />} />
+          <Route path="/account-onboarding" element={routeElement(<AccountOnboardingPage />)} />
           <Route path="/account" element={<Navigate to="/account-onboarding" replace />} />
-          <Route path="/local-mode" element={<LocalModePage />} />
+          <Route path="/local-mode" element={routeElement(<LocalModePage />)} />
           <Route path="*" element={<Navigate to="/account-onboarding" replace />} />
         </Route>
       </Routes>
@@ -69,27 +103,27 @@ export function AppRoutes() {
     <Routes>
       <Route path="/onboarding" element={<Navigate to="/" replace />} />
       <Route element={<AppShell />}>
-        <Route index element={<DashboardPage />} />
-        <Route path="tool-library" element={<ToolLibraryPage />} />
-        <Route path="tool-guides/:toolTypeId" element={<ToolGuidePage />} />
-        <Route path="my-tools" element={<MyToolsPage />} />
-        <Route path="materials" element={<MaterialsPage />} />
-        <Route path="projects" element={<ProjectsPage />} />
-        <Route path="projects/:projectId" element={<ProjectDetailPage />} />
-        <Route path="project-templates" element={<ProjectTemplatesPage />} />
-        <Route path="project-templates/:templateId" element={<ProjectTemplateDetailPage />} />
-        <Route path="gap-analyzer" element={<GapAnalyzerPage />} />
-        <Route path="workshop-score" element={<WorkshopScorePage />} />
-        <Route path="wishlist" element={<WishlistPage />} />
-        <Route path="mastery" element={<MasteryPage />} />
-        <Route path="settings" element={<SettingsPage />} />
-        <Route path="settings/buying-preferences" element={<BuyingPreferencesPage />} />
-        <Route path="login" element={<LoginPage />} />
-        <Route path="signup" element={<SignupPage />} />
-        <Route path="reset-password" element={<ResetPasswordPage />} />
-        <Route path="account" element={<AccountPage />} />
-        <Route path="account-onboarding" element={<AccountOnboardingPage />} />
-        <Route path="local-mode" element={<LocalModePage />} />
+        <Route index element={routeElement(<DashboardPage />)} />
+        <Route path="tool-library" element={routeElement(<ToolLibraryPage />)} />
+        <Route path="tool-guides/:toolTypeId" element={routeElement(<ToolGuidePage />)} />
+        <Route path="my-tools" element={routeElement(<MyToolsPage />)} />
+        <Route path="materials" element={routeElement(<MaterialsPage />)} />
+        <Route path="projects" element={routeElement(<ProjectsPage />)} />
+        <Route path="projects/:projectId" element={routeElement(<ProjectDetailPage />)} />
+        <Route path="project-templates" element={routeElement(<ProjectTemplatesPage />)} />
+        <Route path="project-templates/:templateId" element={routeElement(<ProjectTemplateDetailPage />)} />
+        <Route path="gap-analyzer" element={routeElement(<GapAnalyzerPage />)} />
+        <Route path="workshop-score" element={routeElement(<WorkshopScorePage />)} />
+        <Route path="wishlist" element={routeElement(<WishlistPage />)} />
+        <Route path="mastery" element={routeElement(<MasteryPage />)} />
+        <Route path="settings" element={routeElement(<SettingsPage />)} />
+        <Route path="settings/buying-preferences" element={routeElement(<BuyingPreferencesPage />)} />
+        <Route path="login" element={routeElement(<LoginPage />)} />
+        <Route path="signup" element={routeElement(<SignupPage />)} />
+        <Route path="reset-password" element={routeElement(<ResetPasswordPage />)} />
+        <Route path="account" element={routeElement(<AccountPage />)} />
+        <Route path="account-onboarding" element={routeElement(<AccountOnboardingPage />)} />
+        <Route path="local-mode" element={routeElement(<LocalModePage />)} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>

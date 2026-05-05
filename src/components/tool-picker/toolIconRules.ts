@@ -81,7 +81,7 @@ import {
   Zap,
   type LucideIcon,
 } from 'lucide-react'
-import type { StatusTone } from '../../data/mock/types'
+import type { StatusTone } from '../../lib/types/status'
 import type { ToolCatalogLibraryItem } from '../../data/schema'
 
 type ToolIconInput = Pick<ToolCatalogLibraryItem, 'internalToolTypeId' | 'displayName' | 'brand' | 'powerType' | 'searchTags' | 'toolType'>

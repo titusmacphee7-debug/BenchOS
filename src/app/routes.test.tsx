@@ -61,6 +61,29 @@ describe('onboarding gate', () => {
     expect(await screen.findByRole('heading', { name: 'Project Template Library' })).toBeInTheDocument()
   })
 
+  it('renders core-loop routes with lazy-loaded pages', async () => {
+    await db.settings.put({ key: 'onboardingComplete', value: 'true', updatedAt: '' })
+
+    const routes = [
+      ['/tool-library', 'Tool Library'],
+      ['/my-tools', 'My Tools'],
+      ['/projects', 'Projects'],
+      ['/wishlist', 'Wishlist'],
+      ['/mastery', 'Tool Mastery'],
+    ] as const
+
+    for (const [route, heading] of routes) {
+      const rendered = render(
+        <MemoryRouter initialEntries={[route]}>
+          <AppRoutes />
+        </MemoryRouter>,
+      )
+
+      expect(await screen.findByRole('heading', { name: heading })).toBeInTheDocument()
+      rendered.unmount()
+    }
+  })
+
   it('renders Phase 3 diagnostic routes in Local Mode', async () => {
     await db.settings.put({ key: 'onboardingComplete', value: 'true', updatedAt: '' })
 

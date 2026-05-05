@@ -8,7 +8,7 @@ import { StatusPill } from '../../components/ui/StatusPill'
 import { addGapItemToWishlist } from '../../data/actions'
 import { useWorkshopDiagnostics } from '../../data/hooks'
 import type { GapItem, GapKind } from '../../data/schema'
-import type { StatusTone } from '../../data/mock/types'
+import type { StatusTone } from '../../lib/types/status'
 
 const filters: Array<{ label: string; value: 'all' | GapKind }> = [
   { label: 'All', value: 'all' },

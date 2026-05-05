@@ -1,4 +1,4 @@
-export type StatusTone = 'green' | 'yellow' | 'red' | 'blue' | 'purple' | 'orange' | 'muted'
+import type { StatusTone } from '../../lib/types/status'
 
 export type ToolType = {
   id: string
