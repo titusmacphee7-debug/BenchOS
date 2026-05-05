@@ -1,4 +1,4 @@
-export type BenchApiTokenProvider = () => Promise<string>
+type BenchApiTokenProvider = () => Promise<string>
 
 export async function benchApi<T>(
   getAccessToken: BenchApiTokenProvider,

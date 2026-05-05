@@ -51,30 +51,6 @@ export function useSettings() {
   return useLiveQuery(() => db.settings.toArray(), [], [])
 }
 
-export function useOnboardingStatus() {
-  const settings = useSettings()
-  const counts = useLiveQuery(async () => ({
-    userTools: await db.userTools.count(),
-    materials: await db.materials.count(),
-    projects: await db.projects.count(),
-    xpEvents: await db.xpEvents.count(),
-  }), [], undefined)
-
-  useEffect(() => {
-    if (!settings || !counts) return
-    const complete = settings.find((setting) => setting.key === 'onboardingComplete')?.value === 'true'
-    const needsOnboarding = settings.find((setting) => setting.key === 'needsOnboarding')?.value
-    const hasWorkshopData = counts.userTools > 0 || counts.materials > 0 || counts.projects > 0 || counts.xpEvents > 0
-    if (!complete && needsOnboarding == null && hasWorkshopData) {
-      const now = new Date().toISOString()
-      void db.settings.put({ key: 'onboardingComplete', value: 'true', updatedAt: now })
-    }
-  }, [counts, settings])
-
-  const complete = settings?.find((setting) => setting.key === 'onboardingComplete')?.value === 'true'
-  return { ready: Boolean(settings && counts), complete }
-}
-
 export function useToolLibraryData() {
   const toolTypes = useLiveQuery(() => db.toolTypes.orderBy('name').toArray(), [], [])
   const aliases = useLiveQuery(() => db.toolAliases.toArray(), [], [])

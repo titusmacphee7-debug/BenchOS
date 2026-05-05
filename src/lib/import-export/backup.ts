@@ -3,7 +3,7 @@ import { db, type BenchOsDatabase } from '../../data/db'
 import type { BackupTableName, BenchOsBackup, ImportResult, Setting } from '../../data/schema'
 import { ensureDatabaseSeeded } from '../../data/seed/seedDatabase'
 
-export const backupTableNames: BackupTableName[] = [
+const backupTableNames: BackupTableName[] = [
   'toolFamilies',
   'toolTypes',
   'toolVariants',
@@ -145,7 +145,7 @@ const v3BackupTableNames = [
   'settings',
 ] as const
 
-export const workshopTableNames: BackupTableName[] = [
+const workshopTableNames: BackupTableName[] = [
   'userTools',
   'materials',
   'projects',
@@ -243,7 +243,7 @@ export async function resetSampleData(database: BenchOsDatabase = db) {
   await markOnboardingComplete(database, now)
 }
 
-export async function markOnboardingComplete(database: BenchOsDatabase = db, timestamp = new Date().toISOString()) {
+async function markOnboardingComplete(database: BenchOsDatabase = db, timestamp = new Date().toISOString()) {
   const settings: Setting[] = [
     { key: 'onboardingComplete', value: 'true', updatedAt: timestamp },
     { key: 'needsOnboarding', value: 'false', updatedAt: timestamp },

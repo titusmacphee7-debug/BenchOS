@@ -15,7 +15,7 @@ export function sortTemplatesForWorkshop(templates: ProjectTemplate[], workshop?
   })
 }
 
-export function scoreTemplateForWorkshop(template: ProjectTemplate, workshop?: WorkshopProfile) {
+function scoreTemplateForWorkshop(template: ProjectTemplate, workshop?: WorkshopProfile) {
   let score = 0
   const text = normalize(`${template.name} ${template.description} ${template.category} ${template.tags.join(' ')}`)
   for (const interest of workshop?.projectInterests ?? []) {

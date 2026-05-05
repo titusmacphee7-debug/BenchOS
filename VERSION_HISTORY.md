@@ -11,10 +11,17 @@
 ## Current Version
 
 ```text
-BenchOS v0.12
+BenchOS v0.13
 ```
 
 ## History
+
+### v0.13 - Stale Local Demo Cleanup
+
+- Removed unused local/demo-era components, mock data files, and unreachable local onboarding page.
+- Removed an obsolete local onboarding status hook.
+- Made a few internal helper exports private.
+- Updated cleaner and design-system docs to match the cleanup.
 
 ### v0.12 - BenchXP Button Interaction Fix
 

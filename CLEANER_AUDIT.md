@@ -2,112 +2,130 @@
 
 ## 1. Current Code Health
 
-BenchOS is healthier after the cleanup pass. The previously identified starter artifacts have been removed, the notification copy typo is fixed, route-level lazy loading is now in place, and shared modal/table accessibility has improved.
+BenchOS is now on the v0.08/Auth0/Netlify path. The app has a clean mandatory-auth routing model, route-level lazy loading, Netlify Functions for server onboarding, and a larger Tool Mastery content surface. The core loop is still recognizable: Tool Library -> inventory -> projects -> readiness -> wishlist/purchases -> more buildable projects -> BenchXP/Tool Mastery.
 
-Verification after cleanup:
+This cleanup pass removed stale local/demo-era code and tightened a few internal exports. A fresh source scan found no `console.*`, `debugger`, TypeScript suppression comments, ESLint suppression comments, or old commented-out code markers in `src` or `netlify`.
 
-- `npm run lint`: passed.
-- `npm run test`: passed, 17 test files and 80 tests.
-- `npm run build`: passed.
-- No standalone `typecheck` script exists; TypeScript checking runs through `npm run build`.
-- The old Vite large-chunk warning is gone. The largest built JS chunk is now about 488.43 kB before gzip.
-- No `console.*`, `debugger`, `@ts-ignore`, `@ts-expect-error`, or `eslint-disable` hits were found in `src`.
+What looks good:
 
-Recent cleanup already present in the repo includes:
+- Current routing explicitly sends signed-out users to Auth0 login and keeps old local-mode/onboarding routes out of production flow.
+- Route-level lazy loading is in place.
+- Shared modal/dialog/table accessibility has tests.
+- Status tone typing now lives outside `data/mock`.
+- Netlify Functions are small entry files with shared auth/db/response helpers.
 
-- Deleted unused starter files: `src/App.css`, `src/assets/react.svg`, `src/assets/vite.svg`.
-- Deleted ignored generated dev/preview log files.
-- Fixed `src/components/layout/TopBar.tsx` copy from `Your all caught up!` to `You're all caught up!`.
-- Added route-level `React.lazy` / `Suspense` code splitting in `src/app/routes.tsx`.
-- Added stronger roles/focus/keyboard behavior to `src/components/ui/Modal.tsx`, `src/components/ui/ConfirmDialog.tsx`, and `src/components/ui/DataTable.tsx`.
-- This audit pass also removed unreferenced starter-style assets: `src/assets/hero.png` and `public/icons.svg`.
+What still looks messy:
 
-The remaining mess is mostly maintainability, naming, planned shared component cleanup, and larger architectural slicing. The riskiest areas remain data/schema/sync/search/readiness behavior, not ordinary unused imports.
+- `src/data/hooks.ts` is a broad hook module imported by startup code, which likely helps pull too much into the initial bundle.
+- `src/features/auth/AccountOnboardingPage.tsx` is a 574-line page with many inline step components.
+- `netlify/functions/_shared/onboardingStore.mjs` is a 272-line SQL/data-access module with no focused tests.
+- There are many historical root planning/summary docs. Some still mention Supabase/local-mode plans and may confuse future agents unless clearly treated as history.
+- Build passes but now warns that the main JS chunk is larger than 500 kB; latest observed main chunk was about 746.20 kB before gzip.
 
 ## 2. No-Risk Cleanup
 
-- Keep running lint/test/build after every cleanup pass; all are currently green.
-- Keep root generated files ignored. No root `.log` files are currently present.
-- Keep avoiding import-only cleanup unless lint/build reports it; current strict TypeScript already catches unused locals/imports.
-- Keep avoiding commented-out-code cleanup unless a fresh scan finds it; no commented-out old code was found in `src`.
-- Keep avoiding console/debug cleanup unless a fresh scan finds it; none was found in `src`.
+Completed in this pass:
+
+- Removed unused design-system helpers that had zero app imports:
+  - `src/components/ui/EmptyState.tsx`
+  - `src/components/ui/FilterBar.tsx`
+- Removed stale mock/demo files that had zero app imports:
+  - `src/data/mock/mockData.ts`
+  - `src/data/mock/types.ts`
+- Removed old unreachable local onboarding page:
+  - `src/features/onboarding/OnboardingPage.tsx`
+- Removed unused old `useOnboardingStatus` from `src/data/hooks.ts`.
+- Updated `docs/design-system.md` so it no longer lists removed components.
+- Made internal-only exports private in:
+  - `src/lib/api/benchApi.ts`
+  - `src/lib/import-export/backup.ts`
+  - `src/lib/preferences/accountPersonalization.ts`
+  - `src/lib/version.ts`
+
+Still safe to repeat any time:
+
+- Run `npm run lint`, `npm run test`, and `npm run build`.
+- Re-run import/file scans before deleting anything.
+- Keep generated `dist`, Netlify local state, real `.env` files, and logs out of commits.
 
 ## 3. Low-Risk Cleanup
 
-- Review `src/components/ui/EmptyState.tsx` and `src/components/ui/FilterBar.tsx`. They are documented in `docs/design-system.md` but not imported by app code. Either wire them into pages intentionally or mark them as planned design-system components.
-- Review `src/data/mock/mockData.ts`. It appears to be an old mock dataset now that live data comes from Dexie seed modules.
-- Move `StatusTone` out of `src/data/mock/types.ts` before any mock folder removal. Production status utilities still depend on that one type.
-- Clean or consolidate untracked coordination/report docs only with owner approval. Current untracked docs include `BENCHOS_COMMAND_CENTER.md`, `BENCHOS_PLANNER_REPORT.md`, `CODE_EDITOR_PHASE_1_SUMMARY.md`, and `TASK_FOR_CODE_EDITOR.md`.
+- Consolidate historical root docs into a smaller `docs/history/` or `docs/reports/` area, but only with owner approval because many are project memory.
+- Unexport additional type-only symbols when a fresh scan proves they are internal and no tests/docs rely on them.
+- Add a short note to docs that old Supabase/local-mode reports are historical, not current production direction.
+- Consider adding a simple Netlify Function unit test harness around request method validation and JSON error responses.
 
 ## 4. Medium-Risk Cleanup
 
-- Split very large files only with focused tests around each boundary:
-  - `src/data/actions.ts`: about 1,185 lines.
-  - `src/data/schema.ts`: about 961 lines.
-  - `src/data/hooks.ts`: about 411 lines.
-  - `src/features/tool-library/ToolLibraryPage.tsx`: about 588 lines.
-  - `src/features/auth/AuthPages.tsx`, `src/features/projects/ProjectDetailPage.tsx`, `src/features/my-tools/MyToolsPage.tsx`, `src/features/dashboard/DashboardPage.tsx`, `src/features/wishlist/WishlistPage.tsx`, and `src/features/materials/MaterialsPage.tsx` remain large page-plus-modal files.
-- Add clearer page-level loading/empty/error state behavior. Many `useLiveQuery` hooks still default to `[]`, so some pages cannot distinguish "still loading" from "empty result".
-- Continue accessibility hardening beyond the shared components. `ToolLibraryPage` still has a custom `ToolDetailModal` implementation instead of using the shared `Modal` component.
-- Review repeated filtering/pagination/form-modal patterns across `MaterialsPage`, `MyToolsPage`, `ProjectsPage`, and `WishlistPage`.
-- Review readiness/search performance before scaling further. Some pages still compute readiness by filtering all requirements inside project/template maps.
+- Split `src/data/hooks.ts` so boot/auth hooks do not import diagnostics and workshop-analysis logic into startup.
+- Split `src/features/auth/AccountOnboardingPage.tsx` into step components and small helpers after adding focused tests around the onboarding flow.
+- Add tests for `netlify/functions/_shared/onboardingStore.mjs` with a mocked query client before changing SQL/storage behavior.
+- Reduce the current build warning by investigating startup imports and manual chunks. Do not just raise `chunkSizeWarningLimit`.
+- Replace remaining `window.confirm` archive flows with the shared `ConfirmDialog` pattern.
+- Add clearer loading/empty/error states where `useLiveQuery` currently defaults to `[]` and hides the difference between loading and empty.
 
 ## 5. High-Risk Changes To Avoid
 
-- Do not refactor database schema, Dexie versioning, Supabase migrations, sync tables, or conflict behavior as cleanup.
-- Do not alter seed data shape or public inventory expansion logic without product/data review.
-- Do not change readiness, diagnostics, search ranking, or project-template behavior merely to reduce file size.
-- Do not remove auth, local mode, onboarding, or account-linking paths without validating the intended account/sync flow.
-- Do not remove `.agents/skills/benchos-tool-image-agent`; it is project tooling, not app dead code.
-- Do not delete untracked planning/report docs unless the owner confirms they are obsolete.
+- Do not change Auth0 login/session behavior as generic cleanup.
+- Do not change Netlify Database schema, migrations, SQL semantics, or onboarding persistence without focused approval/tests.
+- Do not change Dexie schema/versioning, seed data shape, readiness logic, diagnostics, search ranking, or Tool Mastery guide content as cleanup.
+- Do not remove Tool Library, My Tools, Projects, Readiness, Wishlist, Materials, BenchXP, or Tool Mastery behavior.
+- Do not delete historical planning/report docs without owner approval.
+- Do not print, copy, or commit real `.env` values.
 
 ## 6. Unused Code Candidates
 
+No high-confidence unused source files remain after this cleanup pass.
+
+Lower-confidence candidates to leave alone:
+
 | File path | What seems unused | Why you think it is unused | Confidence level | Safe action |
 | --- | --- | --- | --- | --- |
-| `src/components/ui/EmptyState.tsx` | Shared empty-state component | Import graph shows no app imports. It is listed in `docs/design-system.md`, so it may be planned rather than dead. | high | leave |
-| `src/components/ui/FilterBar.tsx` | Shared filter component/type | Import graph shows no app imports. Similar filter UIs are implemented inline on several pages. It is also listed in `docs/design-system.md`. | high | leave |
-| `src/data/mock/mockData.ts` | Old mock dataset | Import graph shows no app imports. Live app data appears to come from seed/database modules now. | high | needs review |
-| `src/data/mock/types.ts` | Mostly old mock types | `StatusTone` is still used by `src/lib/utils/status.ts`; other mock types appear tied to the unused mock dataset. | medium | needs review |
-| `src/lib/sync/accountLinkingService.ts` | Account linking helper wrapper | Import graph shows no app imports. It may be planned auth/sync glue, so deletion needs owner approval. | medium | needs review |
-| `src/data/schema.ts` exported type aliases | Some exported domain type aliases are not externally referenced | Export scan shows many public domain types without direct imports, but these may be intentional documentation/API types. | low | leave |
-| `src/lib/sync/localModeService.ts` `getPendingSyncCount` | Exported helper | No external references found in current app scan. Could be intended for future sync UI. | low | leave |
+| `src/data/hooks.ts` | `usePurchaseHistory` export | No current app imports found. Purchases are part of the core loop, so this may be future-facing. | medium | leave |
+| `src/data/schema.ts` | Some exported domain aliases/constants | Export scan shows many are not imported directly. They document the data model and are type-only or low-cost. | low | leave |
+| `src/lib/onboarding/onboardingTypes.ts` | Some exported draft/status subtypes | Some are consumed through aggregate types. Keeping these exports is clearer for the Netlify onboarding boundary. | low | leave |
 
-Resolved in this cleanup:
+Resolved unused-code removals:
 
-- `src/App.css` removed.
-- `src/assets/react.svg` removed.
-- `src/assets/vite.svg` removed.
-- `src/assets/hero.png` removed.
-- `public/icons.svg` removed.
-- Root dev/preview log files removed.
+- `src/App.css`
+- `src/assets/react.svg`
+- `src/assets/vite.svg`
+- `src/assets/hero.png`
+- `public/icons.svg`
+- `src/components/ui/EmptyState.tsx`
+- `src/components/ui/FilterBar.tsx`
+- `src/data/mock/mockData.ts`
+- `src/data/mock/types.ts`
+- `src/features/onboarding/OnboardingPage.tsx`
+- `src/data/hooks.ts` `useOnboardingStatus`
 
 ## 7. Duplicate Code Candidates
 
 - `nextStepLabel` appears in both `src/features/dashboard/DashboardPage.tsx` and `src/features/projects/ProjectsPage.tsx`.
 - `readinessTone` is duplicated in `src/features/project-templates/ProjectTemplatesPage.tsx` even though `src/lib/utils/status.ts` exports a richer version.
 - `groupBy` appears in `src/data/hooks.ts` and `src/features/project-templates/ProjectTemplatesPage.tsx`.
-- `formatDate` style helpers are repeated across dashboard, materials, my-tools, auth/account, and top bar files.
-- Tool and material filter UIs are similar while `src/components/ui/FilterBar.tsx` remains unused.
+- `formatDate` helpers are repeated across dashboard, materials, my-tools, auth/account, and top bar files.
+- Tool and material filter UIs are similar and still implemented inline.
 - Tool and material pagination controls are nearly identical.
-- Create/edit modal patterns are repeated inline in page files: projects, materials, my-tools, wishlist, project detail, and tool library.
-- Archive flows still mix `window.confirm` in feature pages with `ConfirmDialog` in settings.
-- Table/list empty states are implemented ad hoc or missing despite an unused `EmptyState` design-system component.
-- Stat-card grids repeat across dashboard, materials, my-tools, projects, mastery, and gap analyzer pages.
+- Create/edit modal patterns are repeated inline in projects, materials, my-tools, wishlist, project detail, and tool library pages.
+- Netlify Function entry files share almost identical require-auth/try-catch/response wrappers.
 
-## 8. Exact Phase 2 Code Editor Prompt
+## 8. Exact Phase 3 Code Editor Prompt
 
 ```text
-You are the BenchOS Code Editor doing Phase 2 cleanup only.
+You are the BenchOS Code Editor doing Phase 3 cleanup.
 
-Read CLEANER_AUDIT.md first. Do not change schemas, migrations, seed data, sync behavior, auth behavior, readiness logic, search ranking, routing behavior, or dependencies.
+Read CLEANER_AUDIT.md first. Do not change Auth0 behavior, Netlify Database schema/migrations, Dexie schema, seed data, search ranking, readiness logic, Tool Mastery content, or routes.
 
-Make only this cleanup pass:
-1. Move the `StatusTone` type out of `src/data/mock/types.ts` into an appropriate non-mock shared type location, then update imports.
-2. After that, review whether `src/data/mock/mockData.ts` and the remaining mock-only types in `src/data/mock/types.ts` can be removed. Remove them only if no production or test imports remain.
-3. Do not remove `src/components/ui/EmptyState.tsx`, `src/components/ui/FilterBar.tsx`, or `src/lib/sync/accountLinkingService.ts`.
-4. Do not refactor large files yet.
-5. Do not touch untracked planning/report docs unless explicitly asked.
+Goal: reduce the current Vite main chunk warning without changing behavior.
 
-After changes, run `npm run lint`, `npm run test`, and `npm run build`. Report exactly what changed, what remained, and any warnings. Stop there.
+Tasks:
+1. Trace why `dist/assets/index-*.js` is above 500 kB after `npm run build`.
+2. Prefer splitting startup imports over changing Vite warning limits.
+3. Investigate whether `src/data/hooks.ts` can be split so boot/auth hooks used by `App.tsx` and `routes.tsx` do not import diagnostics/search/workshop score code.
+4. Make the smallest safe change with focused tests if behavior is touched.
+5. Run `npm run lint`, `npm run test`, and `npm run build`.
+6. Report bundle sizes and any remaining warning.
+
+Stop after the bundle-focused cleanup.
 ```

@@ -40,8 +40,6 @@ BenchOS uses a dark workshop command-center interface.
 - DataTable
 - StatusPill
 - ProgressBar
-- FilterBar
 - DetailPanel
-- EmptyState
 - ConfirmDialog
 - ToolPicker
