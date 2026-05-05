@@ -121,7 +121,7 @@ export function TopBar() {
                 </button>
               </div>
               {activeNotifications.length === 0 ? (
-                <p className="mt-4 rounded-lg border border-bench-border bg-white/[0.025] p-3 text-sm text-bench-muted">Your all caught up!</p>
+                <p className="mt-4 rounded-lg border border-bench-border bg-white/[0.025] p-3 text-sm text-bench-muted">You're all caught up!</p>
               ) : (
                 <div className="mt-3 grid gap-3">
                   {activeNotifications.slice(0, 5).map((notification) => (
