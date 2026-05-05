@@ -2,14 +2,14 @@
 
 BenchOS is a workshop operating system for tools, materials, projects, readiness, mastery, diagnostics, and buying decisions.
 
-Current app version: `v0.07`
+Current app version: `v0.08`
 
 Version rule: every committed app/source-code change increases the visible app version by `0.01`. See [VERSION_HISTORY.md](VERSION_HISTORY.md).
 
 ## Local Development
 
 ```bash
-npm install --legacy-peer-deps
+npm install
 npm run dev -- --host 127.0.0.1
 ```
 
@@ -19,16 +19,16 @@ The dev script uses port `5173` with `--strictPort` so Auth0 callback URLs do no
 
 ## Auth0 Login
 
-BenchOS uses the official Auth0 React SDK for primary production login.
+BenchOS production auth is Auth0-only. The app uses the official Auth0 React SDK for login, signup, session state, and logout.
 
 Current public Auth0 app settings:
 
-```bash
+```text
 VITE_AUTH0_DOMAIN=appbenchos.us.auth0.com
 VITE_AUTH0_CLIENT_ID=Y0a2nfZcrGrwkAFWpeeHn6CoZPmcwCKh
 ```
 
-Add these exact URLs in the Auth0 application before testing login:
+Add these URLs in the Auth0 application before testing login:
 
 ```text
 Allowed Callback URLs: http://localhost:5173, http://127.0.0.1:5173, https://appbenchos.com
@@ -38,36 +38,36 @@ Allowed Web Origins:   http://localhost:5173, http://127.0.0.1:5173, https://app
 
 See [docs/AUTH0_SETUP.md](docs/AUTH0_SETUP.md) for the beginner checklist.
 
-## Supabase Auth
+## Data Direction
 
-BenchOS production requires Supabase Auth before the dashboard and workshop pages open. Add these public frontend environment variables for local development and Netlify:
+BenchOS uses Netlify Functions plus Netlify Database for production onboarding/workspace data. Netlify Database is managed Postgres built into the Netlify deploy workflow.
 
-1. Create a Supabase project.
-2. Copy `.env.example` to `.env`.
-3. Add:
+New accounts start clean; starter sample data is not loaded automatically. Browser code must never receive database credentials.
 
-```bash
-VITE_SUPABASE_URL=your-project-url
-VITE_SUPABASE_ANON_KEY=your-anon-or-publishable-key
+The onboarding schema lives in:
+
+```text
+netlify/database/migrations/
 ```
 
-4. Run the SQL migration in `supabase/migrations/20260504000000_phase4_auth_sync.sql` if you are testing the existing Supabase sync layer.
-5. Add local Auth redirect URLs for `/login`, `/signup`, `/account`, and `/account-onboarding`.
+Netlify applies these migrations during deploys once Netlify Database is initialized for the site.
 
-Only user/workshop data syncs through the existing Supabase sync layer. Seeded catalog/library records stay app reference data. Netlify Database is planned as the production app data store in a later implementation slice.
+## BenchXP And Tool Mastery
 
-See [docs/supabase-setup.md](docs/supabase-setup.md) for the full setup checklist.
+BenchXP is familiarity/readiness guidance, not certification or proof of safe competence. Tool Mastery guides combine practical reading, setup habits, safety review, practice, project use, maintenance, and evidence.
+
+See [docs/BENCHXP_GUIDE_PHILOSOPHY.md](docs/BENCHXP_GUIDE_PHILOSOPHY.md).
 
 ## Netlify Deployment
 
-BenchOS is ready to deploy to Netlify as a Vite + React app. Use `npm run build` as the build command and `dist` as the publish directory.
+BenchOS deploys to Netlify as a Vite + React single-page app. Use `npm run build` as the build command and `dist` as the publish directory.
 
 For the full setup checklist, including `appbenchos.com` DNS instructions and environment variable names, see [docs/NETLIFY_DEPLOYMENT.md](docs/NETLIFY_DEPLOYMENT.md).
 
 ## Validation
 
 ```bash
-npm run build
 npm run lint
-npm run test -- --run
+npm run test
+npm run build
 ```

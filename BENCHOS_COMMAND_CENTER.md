@@ -17,7 +17,7 @@ This file keeps the BenchOS Codex chats coordinated and safe. Use plain language
 - Real BenchOS app folder: `C:\Users\slaye\Documents\Codex\BenchOS`.
 - Launcher folder: `C:\Users\slaye\OneDrive\Documents\New project`.
 - Main branch: `main`.
-- Current tracked app version: `v0.07`.
+- Current tracked app version: `v0.08`.
 - Version rule: every committed app/source-code change must increase the visible app version by `0.01`.
 - Shared version source: `src/lib/version.ts`.
 - The main folder is the trusted coordination and review folder.
@@ -29,7 +29,7 @@ This file keeps the BenchOS Codex chats coordinated and safe. Use plain language
 - Latest known cleanup-related commits on `main`:
   - `7a2b609` - `Clean up unused starter artifacts`
   - `1b1cbf5` - `Document code editor cleanup execution`
-- BenchOS stack from `package.json`: React, Vite, TypeScript, Tailwind CSS, React Router, Dexie / IndexedDB, Supabase Auth, Vitest, and ESLint.
+- BenchOS stack from `package.json`: React, Vite, TypeScript, Tailwind CSS, React Router, Dexie / IndexedDB, Auth0 React SDK, Vitest, and ESLint.
 - Available npm scripts: `npm run dev`, `npm run build`, `npm run lint`, `npm run test`, and `npm run preview`.
 - There is no standalone `typecheck` script. TypeScript checking happens inside `npm run build`.
 - Last documented full verification from Code Editor passed: `npm run lint`, `npm run test`, and `npm run build`.
@@ -40,7 +40,7 @@ This file keeps the BenchOS Codex chats coordinated and safe. Use plain language
 
 | Chat | Report file | Status | Key points |
 | --- | --- | --- | --- |
-| Planner | `BENCHOS_PLANNER_REPORT.md` | Gathered | Recommends v0.02 focus on Tool Library/catalog quality, core-loop QA, Tool Mastery depth, optional Supabase confidence, and safe owner workflow. Says to delay broad cleanup, new dependencies, major redesign, schema changes, and marketplace/price features. |
+| Planner | `BENCHOS_PLANNER_REPORT.md` | Gathered | Recommends v0.02 focus on Tool Library/catalog quality, core-loop QA, Tool Mastery depth, auth confidence, and safe owner workflow. Says to delay broad cleanup, new dependencies, major redesign, schema changes, and marketplace/price features. |
 | Cleaner | `CLEANER_AUDIT.md` | Gathered | Finds the app generally healthy with passing checks. Recommends safe cleanup order: typo fix, confirmed unused starter artifacts, ignored logs, then later medium-risk accessibility/code-splitting/file-size work only with approval. |
 | Code Editor | `CODE_EDITOR_PHASE_1_SUMMARY.md` | Gathered | First small cleanup pass fixed only the TopBar copy typo and ran `npm run lint`, `npm run test`, and `npm run build`, all passing. It did not delete files because that prompt did not approve deletion. |
 | Code Editor | `CODE_EDITOR_EXECUTION_SUMMARY.md` | Gathered | Later execution removed confirmed unused starter files, removed ignored generated log files, kept uncertain files untouched, fixed the TopBar typo, ran checks, and committed cleanup as `7a2b609`, followed by summary commit `1b1cbf5`. |
@@ -100,7 +100,7 @@ Why this is the next task:
 - Do not remove Tool Library, My Tools, Projects, Readiness, Wishlist, Materials, BenchXP, or Tool Mastery.
 - Preserve the BenchOS orange accent.
 - Worktrees do not automatically receive ignored local files like `.env.local`.
-- If a worktree needs Supabase, create its own local env file without printing secret values.
+- If a worktree needs Auth0 login, use the fixed Vite port `5173` so Auth0 callback URLs match.
 - Build chunk-size warnings are not failures, but they should be noted if bundle work is planned later.
 - The Reviewer / QA report is missing right now.
 - Do not treat the cleanup commit as fully approved until review is complete.
@@ -173,3 +173,9 @@ Paste future chat summaries below this line.
 - Owner confirmed Auth0 works after adding dashboard URLs.
 - Removed the stale hardcoded setup reminder from the login/sign-up UI.
 - Version bumped from `v0.06` to `v0.07`.
+
+### v0.08 Auth0, Onboarding, And Tool Mastery Release Entry
+
+- Owner approved pushing the accumulated Auth0, Netlify Database onboarding, login polish, and Tool Mastery guide foundation work.
+- Version bumped from `v0.07` to `v0.08` for the release commit.
+- Do not push future changes automatically unless the owner explicitly approves another push.

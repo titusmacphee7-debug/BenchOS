@@ -34,7 +34,7 @@ The repo includes `netlify.toml`, so Netlify should also detect these build sett
 
 ## B. Add Environment Variables In Netlify
 
-BenchOS uses Auth0 for primary production login. The current Auth0 domain and client ID are included as public defaults in the app. If you want Netlify to control them instead, add these public frontend variables:
+BenchOS uses Auth0 for production login. These are public SPA settings, not client secrets:
 
 ```text
 VITE_AUTH0_DOMAIN
@@ -48,31 +48,45 @@ VITE_AUTH0_DOMAIN=appbenchos.us.auth0.com
 VITE_AUTH0_CLIENT_ID=Y0a2nfZcrGrwkAFWpeeHn6CoZPmcwCKh
 ```
 
-BenchOS also supports Supabase Auth and cloud sync as a fallback. Add these public Supabase variables in Netlify if you want the existing sync feature.
-
-In Netlify:
-
-1. Open the BenchOS site dashboard.
-2. Go to **Site configuration** or **Project configuration**.
-3. Open **Environment variables**.
-4. Add these variable names:
+Required API token audience for server-verified onboarding/API calls:
 
 ```text
-VITE_SUPABASE_URL
-VITE_SUPABASE_ANON_KEY
+VITE_AUTH0_AUDIENCE
+AUTH0_DOMAIN
+AUTH0_AUDIENCE
 ```
 
-BenchOS also recognizes this public fallback key name if needed:
+Do not add Auth0 client secrets to this frontend app. Do not commit `.env` or `.env.local`.
+
+## C. Initialize Netlify Database
+
+BenchOS uses Netlify Database for production onboarding/workspace data.
+
+For an existing project, Netlify's documented setup path is:
+
+```bash
+netlify database init
+```
+
+That setup installs/wires the database integration and creates the managed Postgres database for the site. The repo contains migrations in:
 
 ```text
-VITE_SUPABASE_PUBLISHABLE_KEY
+netlify/database/migrations/
 ```
 
-Use the values from your local `.env.local` or Supabase project dashboard, but never paste those values into GitHub, docs, chat, or committed files.
+Netlify applies those migrations during production deploys and deploy previews after the database is initialized.
 
-Never use a Supabase service-role key in BenchOS frontend settings. Service-role keys are server-only secrets.
+## D. Auth0 Dashboard URLs
 
-## C. Add The Custom Domain
+In the Auth0 dashboard, open the BenchOS SPA application and add:
+
+```text
+Allowed Callback URLs: http://localhost:5173, http://127.0.0.1:5173, https://appbenchos.com
+Allowed Logout URLs:   http://localhost:5173, http://127.0.0.1:5173, https://appbenchos.com
+Allowed Web Origins:   http://localhost:5173, http://127.0.0.1:5173, https://appbenchos.com
+```
+
+## E. Add The Custom Domain
 
 In Netlify:
 
@@ -87,7 +101,7 @@ appbenchos.com
 
 5. If this is the main app URL, make `appbenchos.com` the primary domain.
 
-## D. DNS Setup
+## F. DNS Setup
 
 DNS is what points `appbenchos.com` to your Netlify site.
 
@@ -117,13 +131,13 @@ If you move DNS management to Netlify, follow Netlify's instructions for changin
 
 After Netlify DNS is active, Netlify should manage the needed DNS records for `appbenchos.com`.
 
-## E. HTTPS
+## G. HTTPS
 
 After DNS points to Netlify, Netlify should automatically provision HTTPS for `appbenchos.com`.
 
 DNS and HTTPS can take time to activate. It is normal for the custom domain or certificate to show as pending for a while after setup.
 
-## F. Post-Deploy Testing Checklist
+## H. Post-Deploy Testing Checklist
 
 After Netlify says the deploy is live, test:
 
@@ -131,14 +145,15 @@ After Netlify says the deploy is live, test:
 - Auth0 login opens Universal Login.
 - Auth0 login returns to BenchOS after sign-in.
 - Auth0 logout returns to BenchOS after sign-out.
-- Supabase connection works if Supabase variables were added.
+- Netlify Database bootstrap succeeds after login.
+- Workshop Setup Mission can be completed or skipped.
 - Refreshing app routes works, such as `/tool-library` or `/projects`.
-- Dashboard loads.
+- Dashboard loads after onboarding is complete.
 - Tool Library loads.
 - Projects load.
 - Wishlist loads.
 - Browser console has no major errors.
-- Mobile layout is usable.
+- Mobile login layout is usable.
 
 ## Build Settings Reference
 

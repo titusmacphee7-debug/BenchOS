@@ -31,11 +31,12 @@ describe('account onboarding', () => {
     await db.authSessionStates.put({
       id: 'local-session',
       status: 'signed_in',
-      provider: 'supabase',
+      provider: 'auth0',
       userId: 'user-1',
       email: 'owner@example.com',
-      cloudBackupEnabled: true,
-      cloudSyncEnabled: true,
+      cloudBackupEnabled: false,
+      cloudSyncEnabled: false,
+      syncStatus: 'local',
       updatedAt: '',
     })
 
@@ -47,8 +48,10 @@ describe('account onboarding', () => {
 
     expect(userProfile?.displayName).toBe('Owner')
     expect(userProfile?.accountOnboardingCompletedAt).toBeTruthy()
-    expect(userProfile?.syncStatus).toBe('pending')
+    expect(userProfile?.syncStatus).toBe('local')
     expect(workshop?.name).toBe('Owner Workshop')
+    expect(workshop?.cloudBackupEnabled).toBe(false)
+    expect(workshop?.cloudSyncEnabled).toBe(false)
     expect(workshop?.type).toBe('woodworking')
     expect(workshop?.spaceType).toBe('apartment')
     expect(workshop?.projectInterests).toContain('Storage')

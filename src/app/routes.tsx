@@ -8,7 +8,6 @@ const AccountOnboardingPage = lazy(() =>
 )
 const AccountPage = lazy(() => import('../features/auth/AuthPages').then((module) => ({ default: module.AccountPage })))
 const LoginPage = lazy(() => import('../features/auth/AuthPages').then((module) => ({ default: module.LoginPage })))
-const ResetPasswordPage = lazy(() => import('../features/auth/AuthPages').then((module) => ({ default: module.ResetPasswordPage })))
 const SignupPage = lazy(() => import('../features/auth/AuthPages').then((module) => ({ default: module.SignupPage })))
 const DashboardPage = lazy(() => import('../features/dashboard/DashboardPage').then((module) => ({ default: module.DashboardPage })))
 const GapAnalyzerPage = lazy(() =>
@@ -65,8 +64,8 @@ function SessionLoadingFallback() {
 
 function PublicAuthFrame({ children }: { children: ReactNode }) {
   return (
-    <div className="min-h-screen bg-bench-bg px-5 py-8 text-bench-text lg:px-8">
-      <div className="mx-auto mb-8 flex max-w-5xl items-center gap-3">
+    <div className="min-h-screen bg-bench-bg px-5 py-7 text-bench-text lg:px-8">
+      <div className="mx-auto mb-7 flex max-w-6xl items-center gap-3">
         <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-bench-orange/35 bg-bench-orange/15 text-lg font-black text-bench-orange">
           B
         </span>
@@ -87,7 +86,7 @@ function publicAuthElement(element: ReactNode) {
 export function AppRoutes() {
   const authGate = useAuthGateState()
   const accountOnboarding = useAccountOnboardingStatus()
-  const signedIn = authGate.session?.status === 'signed_in'
+  const signedIn = authGate.session?.status === 'signed_in' && authGate.session.provider === 'auth0'
 
   if (!authGate.ready) return <SessionLoadingFallback />
 
@@ -96,7 +95,7 @@ export function AppRoutes() {
       <Routes>
         <Route path="/login" element={publicAuthElement(<LoginPage />)} />
         <Route path="/signup" element={publicAuthElement(<SignupPage />)} />
-        <Route path="/reset-password" element={publicAuthElement(<ResetPasswordPage />)} />
+        <Route path="/reset-password" element={<Navigate to="/login" replace />} />
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     )

@@ -49,8 +49,6 @@ import {
 } from './schema'
 import { getMaterialStockStatus } from '../lib/inventory/inventory'
 import { wishlistItemTypeForGap } from '../lib/diagnostics/gapAnalyzer'
-import { isSupabaseConfigured } from '../lib/auth/supabaseClient'
-import { syncNow } from '../lib/sync/cloudSyncService'
 import { calculateMasteryProgress, calculateUsageLevel, getToolUseXp, XP_RULES } from '../lib/xp/xpEngine'
 
 const optionalText = z.string().optional()
@@ -566,7 +564,7 @@ export async function saveToolBuyingPreferences(values: ToolBuyingPreferences) {
   const existing = await db.toolBuyingPreferences.get(values.id)
   const next: ToolBuyingPreferences = {
     ...values,
-    ...pendingSyncMeta(),
+    ...localSyncMeta(),
     createdAt: existing?.createdAt ?? values.createdAt ?? now,
     updatedAt: now,
   }
@@ -575,6 +573,7 @@ export async function saveToolBuyingPreferences(values: ToolBuyingPreferences) {
 }
 
 export async function completeAccountOnboarding(values: AccountOnboardingFormValues, options: { sync?: boolean } = {}) {
+  void options
   const now = new Date().toISOString()
   const session = await db.authSessionStates.get('local-session')
   const existingUser = await db.userProfiles.get('local-user')
@@ -582,7 +581,7 @@ export async function completeAccountOnboarding(values: AccountOnboardingFormVal
   const existingPreferences = await db.toolBuyingPreferences.get('default')
   const signedIn = session?.status === 'signed_in'
   if (!signedIn) throw new Error('Sign in before completing account setup.')
-  const syncMeta = pendingSyncMeta()
+  const syncMeta = localSyncMeta()
   const displayName = values.displayName.trim()
   const workshopName = values.workshopName.trim()
   if (!displayName) throw new Error('Display name is required.')
@@ -616,8 +615,8 @@ export async function completeAccountOnboarding(values: AccountOnboardingFormVal
     spaceType: values.spaceType,
     projectInterests: values.projectInterests,
     safetyPriorities: values.safetyPriorities,
-    cloudBackupEnabled: signedIn,
-    cloudSyncEnabled: signedIn,
+    cloudBackupEnabled: false,
+    cloudSyncEnabled: false,
     ...syncMeta,
     updatedAt: now,
   }
@@ -648,21 +647,7 @@ export async function completeAccountOnboarding(values: AccountOnboardingFormVal
     await db.toolBuyingPreferences.put(preferences)
   })
 
-  let syncError: string | undefined
-  if (options.sync !== false && signedIn && isSupabaseConfigured()) {
-    try {
-      await syncNow()
-    } catch (caught) {
-      syncError = caught instanceof Error ? caught.message : String(caught)
-      await db.authSessionStates.update('local-session', {
-        syncStatus: 'pending',
-        syncError,
-        updatedAt: new Date().toISOString(),
-      })
-    }
-  }
-
-  return { userProfile, workshopProfile, preferences, syncError }
+  return { userProfile, workshopProfile, preferences }
 }
 
 export async function addGapItemToWishlist(gap: GapItem) {
@@ -966,7 +951,7 @@ export async function completeMasteryGuideStep(guideId: string, stepId: string, 
       sourceType: 'Guide',
       sourceId: `guide-mastered:${updated.id}`,
       xpAmount: XP_RULES.masteryComplete,
-      description: `Mastered ${guide.toolName}`,
+      description: `Completed ${guide.toolName} guide`,
       toolTypeId: guide.toolTypeId,
       userToolId: updated.userToolId,
       dedupe: true,
@@ -1248,7 +1233,7 @@ async function syncMetaForLocalMutation(existing?: LocalRecordSyncMeta) {
     ownerUserId: session?.userId ?? existing?.ownerUserId,
     workshopId: workshop?.workshopId ?? existing?.workshopId,
     localOnly: false,
-    syncStatus: 'pending' as const,
+    syncStatus: 'local' as const,
   }
 }
 
@@ -1261,8 +1246,8 @@ function wishlistDuplicateKey(itemType: string, name: string, toolTypeId?: strin
   return [itemType, toolTypeId ?? '', materialId ?? '', catalogItemId ?? '', name.trim().toLowerCase()].join('|')
 }
 
-function pendingSyncMeta() {
-  return { syncStatus: 'pending' as const, localOnly: false }
+function localSyncMeta() {
+  return { syncStatus: 'local' as const, localOnly: false }
 }
 
 function createId(prefix: string) {

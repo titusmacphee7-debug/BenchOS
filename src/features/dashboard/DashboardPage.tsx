@@ -158,7 +158,7 @@ export function DashboardPage() {
   const { gapAnalysis, workshopScore } = useWorkshopDiagnostics()
   const { typeCapabilities } = useToolLibraryData()
   const profileName = userProfile?.displayName?.trim()
-  const displayName = profileName && profileName !== 'Local Mode' ? profileName : session?.email?.split('@')[0] ?? 'Builder'
+  const displayName = profileName || session?.email?.split('@')[0] || 'Builder'
   const lowStock = materials.filter((material) => getMaterialStockStatus(material) !== 'In Stock')
   const goodTools = userTools.filter((tool) => tool.condition === 'Good' || tool.condition === 'New').length
   const projectRows = useMemo<ProjectDashboardRow[]>(() => projects.map((project) => ({

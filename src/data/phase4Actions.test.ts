@@ -40,7 +40,7 @@ describe('phase 4 actions', () => {
     expect(xp?.xpAmount).toBe(25)
   })
 
-  it('marks cloud-linked edited records pending for the next sync', async () => {
+  it('keeps previously cloud-linked edited records local after fallback sync removal', async () => {
     await db.userTools.update('tool-1', {
       ownerUserId: 'user-1',
       workshopId: 'workshop-1',
@@ -58,7 +58,7 @@ describe('phase 4 actions', () => {
     })
 
     const updatedTool = await db.userTools.get('tool-1')
-    expect(updatedTool?.syncStatus).toBe('pending')
+    expect(updatedTool?.syncStatus).toBe('local')
     expect(updatedTool?.localOnly).toBe(false)
   })
 

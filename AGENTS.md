@@ -20,7 +20,7 @@ Current stack discovered from `package.json`:
 - Tailwind CSS
 - React Router
 - Dexie / IndexedDB
-- Supabase client for optional Auth and cloud sync
+- Auth0 React SDK for production auth
 - Vitest
 - ESLint
 
@@ -32,7 +32,7 @@ Current stack discovered from `package.json`:
 - Preserve the BenchOS orange accent.
 - Do not remove Tool Library, My Tools, Projects, Readiness, Wishlist, Materials, BenchXP, or Tool Mastery features.
 - Do not change database schema unless explicitly approved.
-- Do not change authentication or login logic unless only documenting required environment variables.
+- Do not change authentication or login logic unless the owner explicitly approves the auth task.
 - Do not add new dependencies unless explicitly approved.
 - Do not delete files unless clearly safe and approved.
 - Do not rename routes, pages, or navigation items unless explicitly approved.
@@ -134,12 +134,13 @@ npm run dev -- --host 127.0.0.1 --port 5173
 
 ## Environment Rules
 
-- BenchOS works in Local Mode without Supabase.
-- Optional Supabase Auth and sync use public frontend env names only.
-- Required env names for optional Supabase mode:
-  - `VITE_SUPABASE_URL`
-  - `VITE_SUPABASE_ANON_KEY`
-- The code also accepts `VITE_SUPABASE_PUBLISHABLE_KEY` as a key fallback, but `.env.example` documents `VITE_SUPABASE_ANON_KEY`.
+- BenchOS production auth is Auth0-only.
+- Public frontend Auth0 env names:
+  - `VITE_AUTH0_DOMAIN`
+  - `VITE_AUTH0_CLIENT_ID`
+- Optional future API token audience:
+  - `VITE_AUTH0_AUDIENCE`
+- Browser code must never receive database credentials.
 - Never print real env values.
 - Never commit `.env`, `.env.local`, or other real env files.
 

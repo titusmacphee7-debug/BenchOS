@@ -19,10 +19,11 @@ describe('mandatory auth routing', () => {
       </MemoryRouter>,
     )
 
-    expect(await screen.findByRole('heading', { name: 'Sign in to BenchOS' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Your workshop command center starts here.' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Continue with Auth0' })).toBeInTheDocument()
   })
 
-  it('keeps signup and reset password public', async () => {
+  it('keeps signup public and redirects reset password to Auth0 sign in', async () => {
     await putSignedOutSession()
 
     const signup = render(
@@ -31,7 +32,8 @@ describe('mandatory auth routing', () => {
       </MemoryRouter>,
     )
 
-    expect(await screen.findByRole('heading', { name: 'Create your BenchOS account' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Your workshop command center starts here.' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Create account with Auth0' })).toBeInTheDocument()
     signup.unmount()
 
     render(
@@ -40,7 +42,7 @@ describe('mandatory auth routing', () => {
       </MemoryRouter>,
     )
 
-    expect(await screen.findByRole('heading', { name: 'Reset password' })).toBeInTheDocument()
+    expect(await screen.findByRole('button', { name: 'Continue with Auth0' })).toBeInTheDocument()
   })
 
   it('disables the old Local Mode route in production routing', async () => {
@@ -52,8 +54,26 @@ describe('mandatory auth routing', () => {
       </MemoryRouter>,
     )
 
-    expect(await screen.findByRole('heading', { name: 'Sign in to BenchOS' })).toBeInTheDocument()
-    expect(screen.queryByRole('heading', { name: 'Local Mode' })).not.toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Your workshop command center starts here.' })).toBeInTheDocument()
+    expect(screen.queryByText('Local Mode')).not.toBeInTheDocument()
+  })
+
+  it('shows only Auth0 production auth controls', async () => {
+    await putSignedOutSession()
+
+    render(
+      <MemoryRouter initialEntries={['/login']}>
+        <AppRoutes />
+      </MemoryRouter>,
+    )
+
+    expect(await screen.findByRole('button', { name: 'Continue with Auth0' })).toBeInTheDocument()
+    expect(screen.getByText('Secure Workshop Access')).toBeInTheDocument()
+    expect(screen.queryByLabelText(/email/i)).not.toBeInTheDocument()
+    expect(screen.queryByLabelText(/password/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/magic link/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/Supabase/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/Titus/i)).not.toBeInTheDocument()
   })
 
   it('gates signed-in accounts until account onboarding is complete', async () => {
@@ -65,7 +85,7 @@ describe('mandatory auth routing', () => {
       </MemoryRouter>,
     )
 
-    expect(await screen.findByRole('heading', { name: 'Set up your workshop intelligence' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Workshop Setup Mission' })).toBeInTheDocument()
   })
 
   it('renders the main app when signed-in account onboarding is complete', async () => {
@@ -131,9 +151,10 @@ async function putSignedOutSession() {
   await db.authSessionStates.put({
     id: 'local-session',
     status: 'signed_out',
-    provider: 'supabase',
+    provider: 'auth0',
     cloudBackupEnabled: false,
     cloudSyncEnabled: false,
+    syncStatus: 'local',
     updatedAt: '',
   })
 }
@@ -142,11 +163,12 @@ async function putSignedInSession(options: { onboarded?: boolean } = {}) {
   await db.authSessionStates.put({
     id: 'local-session',
     status: 'signed_in',
-    provider: 'supabase',
+    provider: 'auth0',
     userId: 'user-1',
     email: 'owner@example.com',
-    cloudBackupEnabled: true,
-    cloudSyncEnabled: true,
+    cloudBackupEnabled: false,
+    cloudSyncEnabled: false,
+    syncStatus: 'local',
     updatedAt: '',
   })
 
@@ -160,7 +182,7 @@ async function putSignedInSession(options: { onboarded?: boolean } = {}) {
       accountOnboardingCompletedAt: '2026-05-05T00:00:00.000Z',
       accountOnboardingVersion: 1,
       localOnly: false,
-      syncStatus: 'synced',
+      syncStatus: 'local',
       createdAt: '',
       updatedAt: '',
     })

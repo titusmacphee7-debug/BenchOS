@@ -1,20 +1,20 @@
 import {
   Bell,
   ChevronDown,
-  Cloud,
   Command,
   LogIn,
   LogOut,
   Palette,
   Search,
   Settings,
+  ShieldCheck,
   Sun,
   X,
 } from 'lucide-react'
 import { useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useActiveNotifications, useAuthSessionState, useUserProfile } from '../../data/hooks'
-import { persistExternalAuthSession, signOut } from '../../lib/auth/authService'
+import { clearAuthSession } from '../../lib/auth/authService'
 import { useBenchAuth0 } from '../../lib/auth/benchAuth0Context'
 import { Button } from '../ui/Button'
 
@@ -29,11 +29,10 @@ export function TopBar() {
   const [accountOpen, setAccountOpen] = useState(false)
   const [modePromptOpen, setModePromptOpen] = useState(false)
   const searchInputRef = useRef<HTMLInputElement>(null)
-  const signedIn = session?.status === 'signed_in'
-  const auth0Session = session?.provider === 'auth0'
-  const label = signedIn ? auth0Session ? 'Signed in' : 'Synced' : 'Sign in'
+  const signedIn = session?.status === 'signed_in' && session.provider === 'auth0'
+  const label = signedIn ? 'Auth0' : 'Sign in'
   const profileName = userProfile?.displayName?.trim()
-  const displayName = profileName && profileName !== 'Local Mode' ? profileName : session?.email?.split('@')[0] ?? 'Account'
+  const displayName = profileName || session?.email?.split('@')[0] || 'Account'
   const activeNotifications = notifications ?? []
 
   function openSearch() {
@@ -48,13 +47,12 @@ export function TopBar() {
       return
     }
 
-    if (auth0Session && auth0.available) {
-      await persistExternalAuthSession(null)
+    await clearAuthSession()
+    if (auth0.available) {
       auth0.logout()
       return
     }
 
-    await signOut()
     navigate('/login')
   }
 
@@ -92,7 +90,7 @@ export function TopBar() {
             setAccountOpen(false)
           }}
         >
-          <Cloud size={17} />
+          <ShieldCheck size={17} />
           {label}
         </button>
         <Button size="icon" variant="secondary" aria-label="Settings" onClick={() => navigate('/settings')}>
@@ -202,9 +200,9 @@ export function TopBar() {
           <div className="w-full max-w-sm rounded-2xl border border-bench-border bg-bench-panel p-5 shadow-2xl">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <p className="text-lg font-bold text-bench-text">Switch to online mode?</p>
+                <p className="text-lg font-bold text-bench-text">Account access</p>
                 <p className="mt-2 text-sm leading-6 text-bench-muted">
-                  BenchOS production uses sign-in for account access. Open Account to review sync status or sign out of this device.
+                  BenchOS uses Auth0 for account access. Open Account to review your profile or sign out of this device.
                 </p>
               </div>
               <button
@@ -219,7 +217,7 @@ export function TopBar() {
               <Button variant="ghost" onClick={() => setModePromptOpen(false)}>Close</Button>
               <Button
                 variant="primary"
-                icon={<Cloud size={16} />}
+                icon={<ShieldCheck size={16} />}
                 onClick={() => {
                   setModePromptOpen(false)
                   navigate(signedIn ? '/account' : '/login')

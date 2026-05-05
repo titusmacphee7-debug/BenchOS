@@ -33,8 +33,8 @@ export type ToolPriorityLabel =
   | 'Avoid Early'
 export type ToolCostTier = 'budget' | 'balanced' | 'premium' | 'pro'
 export type SyncStatus = 'local' | 'pending' | 'synced' | 'error' | 'conflict'
-export type AuthSessionStatus = 'local' | 'signed_in' | 'signed_out'
-export type AuthProvider = 'supabase' | 'auth0'
+export type AuthSessionStatus = 'signed_in' | 'signed_out'
+export type AuthProvider = 'auth0'
 export type ToolImageSource = 'openverse' | 'wikimedia' | 'manual_url' | 'user_upload' | 'generated_placeholder' | 'category_placeholder'
 export type ToolImageStatus =
   | 'auto_assigned'

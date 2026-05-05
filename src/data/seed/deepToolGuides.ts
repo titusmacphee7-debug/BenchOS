@@ -1,20 +1,14 @@
+import { toolMasteryGuideContents, toolMasteryGuideToSections } from '../../lib/guides/toolMasteryContent'
 import type { ToolGuideSection } from '../schema'
 
 const today = '2026-05-03T00:00:00.000Z'
 
-const coreGuides = [
-  ['cordless-drill', 'Cordless Drill', 'Drilling', ['pilot holes', 'driving screws', 'countersinking'], ['drill bits', 'driver bits', 'countersink bit']],
-  ['impact-driver', 'Impact Driver', 'Fastening', ['long screws', 'lag bolts', 'deck fasteners'], ['impact-rated bits', 'nut drivers', 'socket adapters']],
-  ['circular-saw', 'Circular Saw', 'Cutting', ['straight lumber cuts', 'sheet goods', 'rough sizing'], ['fine-tooth blade', 'speed square', 'straight edge guide']],
-  ['miter-saw', 'Miter Saw', 'Cutting', ['repeat crosscuts', 'trim miters', 'framing parts'], ['stop block', 'finish blade', 'dust collection adapter']],
+const structuredGuideIds = new Set(toolMasteryGuideContents.map((guide) => guide.toolTypeId))
+
+const supplementalCoreGuides = [
   ['jigsaw', 'Jigsaw', 'Cutting', ['curves', 'notches', 'sink cutouts'], ['wood blades', 'metal blades', 'splinter guard']],
-  ['random-orbital-sander', 'Random Orbital Sander', 'Sanding', ['surface prep', 'finish sanding', 'paint removal'], ['sanding discs', 'vacuum hose', 'interface pad']],
   ['router', 'Router', 'Routing', ['edge profiles', 'dados', 'rabbets'], ['roundover bit', 'straight bit', 'hearing protection']],
-  ['shop-vac', 'Shop Vac', 'Dust Collection', ['cleanup', 'tool dust capture', 'wet pickup'], ['filter bags', 'HEPA filter', 'hose adapters']],
-  ['bar-clamp', 'Bar Clamp', 'Clamping', ['glue-ups', 'holding assemblies', 'work support'], ['clamp pads', 'cauls', 'glue rags']],
   ['level', 'Level', 'Measuring', ['shelf installs', 'cabinets', 'layout'], ['pencil', 'stud finder', 'mounting hardware']],
-  ['tape-measure', 'Tape Measure', 'Measuring', ['layout', 'cut lists', 'room measurement'], ['pencil', 'notebook', 'marking knife']],
-  ['speed-square', 'Speed Square', 'Layout', ['square cuts', 'rafter angles', 'saw guide cuts'], ['pencil', 'circular saw', 'clamps']],
   ['multimeter', 'Multimeter', 'Electrical', ['voltage checks', 'continuity tests', 'battery checks'], ['test leads', 'alligator clips', 'fresh battery']],
   ['voltage-tester', 'Voltage Tester', 'Electrical', ['live-wire checks', 'outlet safety', 'fixture prep'], ['known-live outlet', 'flashlight', 'labels']],
   ['basin-wrench', 'Basin Wrench', 'Plumbing', ['faucet nuts', 'tight sink spaces', 'supply hardware'], ['bucket', 'work light', 'supply lines']],
@@ -23,7 +17,7 @@ const coreGuides = [
   ['floor-jack', 'Floor Jack', 'Automotive', ['lifting vehicles', 'wheel service', 'inspection setup'], ['jack stands', 'wheel chocks', 'gloves']],
   ['torque-wrench', 'Torque Wrench', 'Fastening', ['lug nuts', 'critical bolts', 'repeatable tightening'], ['socket set', 'torque specs', 'storage case']],
   ['utility-knife', 'Utility Knife', 'Chiseling', ['scoring drywall', 'cutting packaging', 'trim cleanup'], ['sharp blades', 'cut-resistant surface', 'blade disposal']],
-] as const
+] as const satisfies ReadonlyArray<readonly [string, string, string, readonly string[], readonly string[]]>
 
 const sectionTypes: ToolGuideSection['sectionType'][] = [
   'Overview',
@@ -40,18 +34,23 @@ const sectionTypes: ToolGuideSection['sectionType'][] = [
   'Buy Notes',
 ]
 
-export const starterToolGuideSections: ToolGuideSection[] = coreGuides.flatMap(([toolTypeId, toolName, category, uses, accessories]) =>
-  sectionTypes.map((sectionType, index) => ({
-    id: `${toolTypeId}-guide-${index + 1}`,
-    toolTypeId,
-    title: sectionType,
-    sectionType,
-    sortOrder: index,
-    body: guideBody(toolName, category, uses, accessories, sectionType),
-    createdAt: today,
-    updatedAt: today,
-  })),
-)
+export const starterToolGuideSections: ToolGuideSection[] = [
+  ...toolMasteryGuideContents.flatMap((guide) => toolMasteryGuideToSections(guide, today)),
+  ...supplementalCoreGuides
+    .filter(([toolTypeId]) => !structuredGuideIds.has(toolTypeId))
+    .flatMap(([toolTypeId, toolName, category, uses, accessories]) =>
+      sectionTypes.map((sectionType, index) => ({
+        id: `${toolTypeId}-guide-${index + 1}`,
+        toolTypeId,
+        title: sectionType,
+        sectionType,
+        sortOrder: index,
+        body: guideBody(toolName, category, uses, accessories, sectionType),
+        createdAt: today,
+        updatedAt: today,
+      })),
+    ),
+]
 
 function guideBody(
   toolName: string,

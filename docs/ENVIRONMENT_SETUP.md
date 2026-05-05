@@ -23,10 +23,8 @@ This project uses npm. Evidence:
 
 ## Install
 
-Use the install command already documented in the README:
-
 ```bash
-npm install --legacy-peer-deps
+npm install
 ```
 
 ## Dev Server
@@ -37,10 +35,10 @@ Package script:
 npm run dev
 ```
 
-README local dev command:
+Recommended local command:
 
 ```bash
-npm run dev -- --host 127.0.0.1 --port 5173
+npm run dev -- --host 127.0.0.1
 ```
 
 Open:
@@ -48,6 +46,8 @@ Open:
 ```text
 http://127.0.0.1:5173/
 ```
+
+The Vite script pins port `5173` with `--strictPort` for Auth0 callback consistency.
 
 ## Build
 
@@ -93,19 +93,26 @@ npm run preview -- --host 127.0.0.1 --port 4173
 
 ## Environment Variables
 
-BenchOS production requires Supabase env vars for sign-in. Without them, local development can start, but protected app pages stay behind the login screen.
+BenchOS production auth is Auth0-only.
 
-Supabase Auth and the current cloud sync layer use these env names:
+Public frontend Auth0 env names:
 
 ```text
-VITE_SUPABASE_URL
-VITE_SUPABASE_ANON_KEY
+VITE_AUTH0_DOMAIN
+VITE_AUTH0_CLIENT_ID
 ```
 
-The code also accepts this key name as a fallback:
+Required API audience for server-verified Auth0 tokens:
 
 ```text
-VITE_SUPABASE_PUBLISHABLE_KEY
+VITE_AUTH0_AUDIENCE
+```
+
+Server-only Auth0 env names for Netlify Functions:
+
+```text
+AUTH0_DOMAIN
+AUTH0_AUDIENCE
 ```
 
 Do not put real values in this document.
@@ -120,37 +127,37 @@ Safe examples:
 - `.env` should not be committed.
 - `.env.local` should not be committed.
 
-The current `.gitignore` ignores `.env`, `.env.*`, and `*.local`, while allowing `.env.example`.
+The current `.gitignore` ignores `.env`, `.env.local`, `.env.*.local`, `node_modules`, `dist`, `build`, and `.DS_Store`.
 
-For safety, prefer `.env.local` for local secrets in each worktree. Vite reads `.env.local`, and it stays ignored by Git.
+For safety, prefer `.env.local` for local values in each worktree. Vite reads `.env.local`, and it stays ignored by Git.
 
-## Do Worktrees Need Their Own Env File?
-
-Yes, usually.
-
-Git worktrees share Git history, but ignored local files like `.env.local` are not automatically shared between folders. If a worktree needs Supabase Auth or sync, copy only the env names and values into that worktree's own `.env.local`.
-
-Never ask Codex to print the secret values. A safe instruction is:
+Never ask Codex to print secret values. A safe instruction is:
 
 ```text
 Check whether .env.local exists and list only the variable names, not the values.
 ```
 
-## Current Worktree Dependency Status
+## Data Direction
 
-Dependencies have been installed in the three setup worktrees with:
+BenchOS production onboarding data uses Netlify Database through Netlify Functions.
 
-```bash
-npm ci --legacy-peer-deps
+Netlify Database is managed Postgres built into the Netlify workflow. Migrations live in:
+
+```text
+netlify/database/migrations/
 ```
 
-Prepared worktrees:
+Initialize it for the site with Netlify's database setup flow, then deploy so Netlify can apply migrations. Browser code must never receive database credentials.
+
+## Current Worktree Dependency Status
+
+Prepared worktrees from earlier setup:
 
 - `C:\Users\slaye\Documents\Codex\BenchOS-audit`
 - `C:\Users\slaye\Documents\Codex\BenchOS-cleanup`
 - `C:\Users\slaye\Documents\Codex\BenchOS-ui-polish`
 
-Each worktree that needs to open protected BenchOS pages should have its own `.env.local` with the Supabase public env values.
+Each worktree that needs Auth0 login should use the same fixed local port `5173` and the same Auth0 allowed local URLs.
 
 ## Codex App Local Environment Setup
 
@@ -163,13 +170,13 @@ Set it up in the Codex App UI instead:
 3. Add setup/install:
 
 ```bash
-npm install --legacy-peer-deps
+npm install
 ```
 
 4. Add dev action:
 
 ```bash
-npm run dev -- --host 127.0.0.1 --port 5173
+npm run dev -- --host 127.0.0.1
 ```
 
 5. Add build action:
@@ -200,8 +207,7 @@ Repeat or confirm this setup for each worktree after the worktrees exist.
 
 ## Important Safety Notes
 
-- Do not change database schema unless explicitly approved.
-- Do not change authentication or login logic unless only documenting env vars.
-- Do not rename routes or pages unless approved.
-- Do not add dependencies unless approved.
 - Do not print real secret values.
+- Do not commit `.env`, `.env.local`, or other real env files.
+- Do not expose database credentials to browser code.
+- Keep Auth0 dashboard URLs aligned with the browser origin used for testing.

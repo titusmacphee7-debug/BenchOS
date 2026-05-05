@@ -2,7 +2,7 @@ import { BrowserRouter } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import { AppRoutes } from './app/routes'
 import { useSeedDatabase } from './data/hooks'
-import { clearExternalAuthSession, getCurrentSession, listenToAuthChanges, persistAuthSession, persistExternalAuthSession } from './lib/auth/authService'
+import { clearAuthSession, persistAuth0Session } from './lib/auth/authService'
 import { useBenchAuth0 } from './lib/auth/benchAuth0Context'
 
 export default function App() {
@@ -13,33 +13,28 @@ export default function App() {
   useEffect(() => {
     let active = true
     async function prepareAuth() {
-      if (auth0.available && auth0.isLoading) return
-      try {
-        await getCurrentSession()
-      } catch {
-        await persistAuthSession(null).catch(() => undefined)
+      if (auth0.available && auth0.isLoading) {
+        setAuthReady(false)
+        return
       }
 
       if (auth0.available && auth0.isAuthenticated && auth0.user?.sub) {
-        await persistExternalAuthSession({
-          provider: 'auth0',
+        await persistAuth0Session({
           userId: auth0.user.sub,
           email: auth0.user.email,
           displayName: auth0.user.name,
           avatarUrl: auth0.user.picture,
         }).catch(() => undefined)
-      } else if (auth0.available && !auth0.isAuthenticated) {
-        await clearExternalAuthSession('auth0').catch(() => undefined)
+      } else {
+        await clearAuthSession().catch(() => undefined)
       }
 
       if (active) setAuthReady(true)
     }
 
     void prepareAuth()
-    const unsubscribe = listenToAuthChanges()
     return () => {
       active = false
-      unsubscribe()
     }
   }, [auth0.available, auth0.isAuthenticated, auth0.isLoading, auth0.user?.email, auth0.user?.name, auth0.user?.picture, auth0.user?.sub])
 

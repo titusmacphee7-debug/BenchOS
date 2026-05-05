@@ -15,6 +15,7 @@ describe('database seeding', () => {
       expect(secondSeed).toBe(false)
       expect(toolCountAfterFirstSeed).toBeGreaterThanOrEqual(170)
       expect(await database.userTools.count()).toBe(0)
+      expect((await database.authSessionStates.get('local-session'))?.provider).toBe('auth0')
       expect(await database.materials.count()).toBe(0)
       expect(await database.projects.count()).toBe(0)
       expect(await database.projectRequirements.count()).toBe(0)

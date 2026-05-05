@@ -4,15 +4,15 @@ const now = '2026-05-03T00:00:00.000Z'
 
 const guideTemplates = [
   ['cordless-drill', 'Cordless Drill', 'Drilling', 'Drill clean pilot holes, drive screws, and care for batteries.'],
+  ['impact-driver', 'Impact Driver', 'Fastening', 'Drive fasteners with impact-rated bits and controlled trigger pressure.'],
   ['circular-saw', 'Circular Saw', 'Cutting', 'Make confident straight cuts in lumber and sheet goods.'],
   ['miter-saw', 'Miter Saw', 'Cutting', 'Set up repeatable crosscuts and accurate miters.'],
-  ['jigsaw', 'Jigsaw', 'Cutting', 'Cut curves, notches, and rough shapes with control.'],
   ['random-orbital-sander', 'Random Orbital Sander', 'Sanding', 'Sand flat surfaces without swirl marks or uneven spots.'],
   ['tape-measure', 'Tape Measure', 'Measuring', 'Measure, mark, and verify parts before cutting.'],
   ['speed-square', 'Speed Square', 'Layout', 'Mark square lines, angles, and quick saw guides.'],
-  ['bar-clamp', 'Bar Clamp', 'Clamping', 'Hold assemblies square and apply useful glue-up pressure.'],
-  ['router', 'Router', 'Routing', 'Route edges, dados, rabbets, and template cuts safely.'],
-  ['table-saw', 'Table Saw', 'Cutting', 'Rip boards and sheet goods with controlled setup and safety.'],
+  ['bar-clamp', 'Clamps', 'Clamping', 'Hold work safely and apply useful glue-up or assembly pressure.'],
+  ['shop-vac', 'Shop Vac / Dust Collection', 'Dust Collection', 'Control dust, chips, filters, bags, and cleanup safely.'],
+  ['socket-set', 'Socket Set', 'Automotive', 'Choose the right socket size, avoid rounding fasteners, and respect torque needs.'],
 ] as const
 
 export const starterMasteryGuides: MasteryGuide[] = guideTemplates.map(([toolTypeId, toolName, category, summary], index) => ({

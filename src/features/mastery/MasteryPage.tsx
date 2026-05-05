@@ -11,8 +11,9 @@ import { StatusPill } from '../../components/ui/StatusPill'
 import { completeMasteryGuideStep, startMasteryGuide } from '../../data/actions'
 import { useActiveUserTools, useMasteryGuides, useMasteryProgress, useRecentActivityFeed, useXpSummary } from '../../data/hooks'
 import type { MasteryGuide, MasteryProgress } from '../../data/schema'
+import { getFamiliarityLabel } from '../../lib/guides/toolMasteryContent'
 
-const tabs = ['All Tools', 'Owned Tools', 'In Progress', 'Mastered']
+const tabs = ['All Tools', 'Owned Tools', 'In Progress', 'Completed Guides']
 
 export function MasteryPage() {
   const [searchParams] = useSearchParams()
@@ -35,7 +36,7 @@ export function MasteryPage() {
     .filter((row) => {
       if (activeTab === 'Owned Tools') return Boolean(row.ownedTool)
       if (activeTab === 'In Progress') return row.progress?.status === 'In Progress'
-      if (activeTab === 'Mastered') return row.progress?.status === 'Mastered'
+      if (activeTab === 'Completed Guides') return row.progress?.status === 'Mastered'
       return true
     })
     .filter((row) => [row.guide.toolName, row.guide.category, row.guide.summary].join(' ').toLowerCase().includes(query.toLowerCase()))
@@ -44,7 +45,7 @@ export function MasteryPage() {
 
   const requestedGuideId = requestedToolTypeId ? guides.find((guide) => guide.toolTypeId === requestedToolTypeId)?.id : undefined
   const selected = rows.find((row) => row.guide.id === (selectedGuideId ?? requestedGuideId)) ?? rows[0]
-  const mastered = progress.filter((item) => item.status === 'Mastered').length
+  const completedGuideCount = progress.filter((item) => item.status === 'Mastered').length
   const inProgress = progress.filter((item) => item.status === 'In Progress').length
   const ownedGuideCount = guides.filter((guide) => tools.some((tool) => tool.toolTypeId === guide.toolTypeId)).length
 
@@ -52,7 +53,7 @@ export function MasteryPage() {
     <div>
       <PageHeader
         title="Tool Mastery"
-        description="Learn, practice, and master your tools with step-by-step guides."
+        description="Build tool familiarity through guides, practice, safety habits, maintenance, and real project evidence."
         icon={Star}
       />
 
@@ -76,7 +77,7 @@ export function MasteryPage() {
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             <StatCard icon={BookOpen} label="Guides" value={guides.length} detail="Starter guide set" tone="orange" />
             <StatCard icon={Wrench} label="Owned Guides" value={ownedGuideCount} detail="Matched to inventory" tone="blue" />
-            <StatCard icon={Star} label="Mastered Tools" value={mastered} detail={`${inProgress} in progress`} tone="green" />
+            <StatCard icon={Star} label="Completed Guides" value={completedGuideCount} detail={`${inProgress} building familiarity`} tone="green" />
             <StatCard icon={TrendingUp} label="BenchXP" value={xpSummary.totalXp} detail={`Level ${xpSummary.level}`} tone="purple" />
           </div>
 
@@ -114,7 +115,7 @@ export function MasteryPage() {
                     </button>
                     <div>
                       <p className={guideProgress?.status === 'Mastered' ? 'text-bench-green' : 'text-bench-orange'}>
-                        {guideProgress?.status ?? 'Not Started'}{guideProgress ? ` - Level ${guideProgress.level}` : ''}
+                        {progressStatusLabel(guide, guideProgress)}
                       </p>
                       <ProgressBar className="mt-2" value={percent} tone={guideProgress?.status === 'Mastered' ? 'green' : 'orange'} />
                     </div>
@@ -146,7 +147,7 @@ export function MasteryPage() {
               </div>
             </div>
             {[
-              ['Mastered', mastered],
+              ['Completed Guides', completedGuideCount],
               ['In Progress', inProgress],
               ['Not Started', Math.max(0, guides.length - progress.length)],
             ].map(([label, value]) => (
@@ -204,10 +205,19 @@ function GuideDetail({ guide, progress, userToolId }: { guide: MasteryGuide; pro
           Complete Next Step
         </Button>
       ) : (
-        <Button className="mt-5 w-full" variant="outline" icon={<CheckCircle2 size={16} />}>Mastered</Button>
+        <Button className="mt-5 w-full" variant="outline" icon={<CheckCircle2 size={16} />}>Completed Guide</Button>
       )}
     </Card>
   )
+}
+
+function progressStatusLabel(guide: MasteryGuide, progress?: MasteryProgress) {
+  if (!progress) return 'Not Started'
+  const percent = Math.round((progress.completedStepIds.length / Math.max(1, guide.steps.length)) * 100)
+  const familiarity = getFamiliarityLabel(percent)
+  if (progress.status === 'Mastered') return `Completed Guide - ${familiarity}`
+  if (progress.status === 'In Progress') return `${familiarity} - Level ${progress.level}`
+  return `${familiarity} - Not Started`
 }
 
 function formatDate(value: string) {

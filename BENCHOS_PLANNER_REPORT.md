@@ -2,15 +2,16 @@
 
 ## Version Tracking
 
-- Current app version: `v0.07`.
+- Current app version: `v0.08`.
 - Version source: `src/lib/version.ts`.
 - Version rule: every committed app/source-code change increases the visible app version by `0.01`.
 - Future Planner, Coordinator, Code Editor, Cleaner, and Reviewer notes should reference the current app version when planning or summarizing code-changing work.
 - `v0.03` includes the mandatory auth shell and no automatic personal sample data by default.
 - `v0.04` removes the approved unused starter assets `public/icons.svg` and `src/assets/hero.png`.
-- `v0.05` integrates the official Auth0 React SDK as the primary login path while keeping Supabase Auth available for the existing sync fallback.
+- `v0.05` integrates the official Auth0 React SDK as the primary login path while the older fallback path still existed.
 - `v0.06` adds Netlify HTTPS/mixed-content security headers after the owner saw a browser `Not secure` warning.
 - `v0.07` removes the stale Auth0 setup warning now that Auth0 login works.
+- `v0.08` includes the Auth0-only production login pass, Netlify Database onboarding foundation, and Tool Mastery guide foundation.
 
 ## 1. Current Product Understanding
 
@@ -31,7 +32,7 @@ The product direction is clear:
 - BenchOS should preserve the orange accent and dark workshop command-center identity.
 - Important flows should use dedicated pages or focused modals, not small hidden sidebars.
 - Tool Mastery should become deeper and more useful without becoming hard to use.
-- Supabase Auth and sync are already present/planned as optional features, while Local Mode remains important.
+- Auth0 is now the production auth direction, and clean-account startup remains important.
 
 Uncertain:
 
@@ -60,7 +61,7 @@ Observed stack:
 - React Router
 - Dexie / IndexedDB
 - MiniSearch
-- Optional Supabase Auth and sync
+- Auth0 React SDK
 - Vitest
 - ESLint
 
@@ -75,8 +76,7 @@ Important folders:
 - `src/data/seed`: starter tool library, starter inventory, starter projects, project templates, deeper tool guide data, public inventory expansion.
 - `src/features`: major pages such as Tool Library, My Tools, Materials, Projects, Project Templates, Gap Analyzer, Workshop Score, Wishlist, Tool Mastery, Settings, Onboarding, and Auth.
 - `src/lib`: domain logic for auth, diagnostics, guides, import/export, inventory, preferences, projects, readiness, search, sync, and XP.
-- `supabase/migrations`: Supabase schema/RLS migration files.
-- `docs`: setup, product spec, workflow, design system, Supabase, and tool image docs.
+- `docs`: setup, product spec, workflow, design system, deployment, Auth0, and tool image docs.
 - `.agents`: local BenchOS tool image agent skill.
 
 Observed app routes include:
@@ -134,14 +134,14 @@ What appears present:
 - Tool Mastery guides and progress.
 - Account onboarding.
 - Buying preferences for preferred brands, avoided brands, battery platforms, budget tier, workshop type, space sensitivity, and cordless preference.
-- Optional Supabase Auth and sync metadata.
-- Supabase migrations for workshops, profiles, workshop records, and RLS tightening.
+- Auth0 session metadata.
+- Legacy fallback auth/sync files have been removed in the v0.08 Auth0-only pass.
 - Import/export logic.
 - Tests for data/schema, actions, readiness, diagnostics, search, sync, XP, project templates, import/export, inventory, and seed behavior.
 
 Important observation:
 
-- The old docs describe Phase 1 as static mock UI and Phase 2 as Dexie/search/CRUD, but the current code appears to already include local-first data, CRUD, readiness, wishlist conversion, logs, XP, optional Supabase, and brand/model catalog records.
+- The old docs describe Phase 1 as static mock UI and Phase 2 as Dexie/search/CRUD, but the current code appears to already include local-first data, CRUD, readiness, wishlist conversion, logs, XP, Auth0 login, and brand/model catalog records.
 
 Uncertain:
 
@@ -169,7 +169,7 @@ v0.02 should focus on:
 - Stronger connection from catalog item to inventory, project requirements, readiness, wishlist, and purchase conversion.
 - Dedicated or focused modal flows for meaningful actions.
 - Tool Mastery guide depth without burying users in dense reading.
-- Optional Supabase login/sync hardening only where it is already planned or present.
+- Auth0 login and logout confidence where it is already planned or present.
 - Owner-safe QA, documentation, and verification flow.
 
 v0.02 should not focus on:
@@ -271,13 +271,13 @@ Tasks:
 
 - Audit login, signup, account onboarding, Local Mode, and sync states.
 - Do not print or expose env secrets.
-- Verify Supabase copy clearly explains optional status.
-- Confirm sync only touches user/workshop data and does not attempt to sync seed catalog records.
-- Preserve current migrations unless a specific approved change is needed.
+- Verify Auth0 copy clearly explains account-required status.
+- Confirm future server-backed sync only touches authenticated user/workshop data and does not attempt to sync seed catalog records.
+- Do not add database migrations unless a specific approved change is needed.
 
 Owner decision needed:
 
-- Decide whether Supabase should be required for beta or remain optional.
+- Decide whether optional starter data should exist later.
 
 ### Phase F: Beta Polish And Owner Workflow
 
@@ -354,7 +354,7 @@ Reason:
 Do not touch yet without explicit approval:
 
 - Database schema.
-- Supabase migrations.
+- Database migrations.
 - Auth/session logic.
 - Sync conflict logic.
 - Routes and navigation names.
@@ -381,7 +381,7 @@ Main risks:
 - The repo already has at least one untracked planning file, so future agents should always check status first.
 - Old docs and current code are not fully aligned, which can cause agents to build the wrong phase.
 - Worktrees are useful but can be confusing if the owner is not sure which folder is trusted.
-- Supabase setup involves env values and RLS policies; a careless agent could expose secrets or weaken data rules.
+- Auth/database setup involves env values and access policies; a careless agent could expose secrets or weaken data rules.
 - Schema changes can create local IndexedDB migration issues.
 - Real brand/model catalogs can imply accuracy. BenchOS should use clear source notes and avoid fake product claims.
 - Product photos/logos/trade dress can create legal and licensing risk.
@@ -482,16 +482,15 @@ Guide should include practical sections for overview, safety, setup, basic use, 
 Run relevant checks and summarize changed files.
 ```
 
-### Prompt 7: Supabase/Auth Audit Only
+### Prompt 7: Auth And Data Audit Only
 
 ```text
 You are working on BenchOS. Do not edit app code. Do not delete files. Do not install packages. Do not print env values. Create a markdown audit report only.
 
-Audit optional Supabase Auth and sync setup:
-- Local Mode should remain fully usable
-- Supabase should be optional unless the owner decides otherwise
-- only user/workshop data should sync
-- seed catalog records should remain local app data
+Audit Auth0 login and future server-verified data setup:
+- Auth0 should be the only production auth provider
+- only authenticated user/workshop data should sync
+- seed catalog records should remain app reference data
 - RLS/auth assumptions should be documented carefully
 
 Report risks, uncertain points, and safe next steps. Stop after creating the report.
@@ -513,8 +512,7 @@ You are working on BenchOS. Do not edit app code. Do not delete files. Do not in
 Create a beginner-friendly v0.02 release checklist that covers:
 - core loop verification
 - Tool Library catalog checks
-- Local Mode checks
-- optional Supabase checks without printing secrets
+- Auth0 checks without printing secrets
 - tests/build/lint
 - known risks
 - owner sign-off steps
