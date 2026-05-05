@@ -25,6 +25,7 @@ import { useActiveUserTools, useMasteryGuides } from '../../data/hooks'
 import type { MasteryGuide, MasteryGuideStep, UserTool } from '../../data/schema'
 import { useBenchXp } from '../../lib/benchxp/useBenchXp'
 import type { BenchXpProgress, BenchXpRecommendation } from '../../lib/benchxp/benchXpApi'
+import { toolTypeGuidePath } from '../../lib/guides/allToolsGuideSystem'
 import {
   getFamiliarityLabel,
   getToolMasteryGuideContent,
@@ -115,7 +116,7 @@ export function MasteryPage() {
       setNotice(`${guide.toolName} guide opened. BenchXP progress will sync when the server is available.`)
     } finally {
       setSavingGuideId(undefined)
-      navigate(`/tool-guides/${guide.toolTypeId}`)
+    navigate(toolTypeGuidePath(guide.toolTypeId))
     }
   }
 
@@ -138,7 +139,7 @@ export function MasteryPage() {
             nextRecommendation={topRecommendation}
             onContinue={() => {
               const target = topRecommendation?.toolTypeId ?? selected?.guide.toolTypeId ?? allRows[0]?.guide.toolTypeId
-              if (target) navigate(`/tool-guides/${target}`)
+    if (target) navigate(toolTypeGuidePath(target))
             }}
           />
 
@@ -147,7 +148,7 @@ export function MasteryPage() {
             fallbackGuide={selected?.guide ?? allRows[0]?.guide}
             onOpen={() => {
               const target = topRecommendation?.toolTypeId ?? selected?.guide.toolTypeId ?? allRows[0]?.guide.toolTypeId
-              if (target) navigate(`/tool-guides/${target}`)
+    if (target) navigate(toolTypeGuidePath(target))
             }}
           />
 
@@ -171,9 +172,9 @@ export function MasteryPage() {
             </Card>
           )}
 
-          <CategoryMasteryGrid rows={categoryRows} onOpenGuide={(toolTypeId) => navigate(`/tool-guides/${toolTypeId}`)} />
+        <CategoryMasteryGrid rows={categoryRows} onOpenGuide={(toolTypeId) => navigate(toolTypeGuidePath(toolTypeId))} />
 
-          <OwnedToolFamiliarity rows={ownedRows} onOpenGuide={(toolTypeId) => navigate(`/tool-guides/${toolTypeId}`)} onBrowseTools={() => navigate('/tool-library')} />
+        <OwnedToolFamiliarity rows={ownedRows} onOpenGuide={(toolTypeId) => navigate(toolTypeGuidePath(toolTypeId))} onBrowseTools={() => navigate('/tool-library')} />
 
           <Card>
             <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
@@ -302,7 +303,7 @@ export function MasteryPage() {
                   key={row.guide.id}
                   type="button"
                   className="w-full rounded-xl border border-bench-border bg-white/[0.025] p-3 text-left hover:border-bench-orange/45"
-                  onClick={() => navigate(`/tool-guides/${row.guide.toolTypeId}`)}
+                    onClick={() => navigate(toolTypeGuidePath(row.guide.toolTypeId))}
                 >
                   <p className="text-sm font-bold text-bench-text">{row.guideContent?.practiceTasks[0]?.title ?? `Practice ${row.guide.toolName}`}</p>
                   <p className="mt-1 text-xs leading-5 text-bench-muted">{row.guideContent?.practiceTasks[0]?.goal ?? row.guide.summary}</p>

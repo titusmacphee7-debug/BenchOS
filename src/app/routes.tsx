@@ -153,7 +153,9 @@ export function AppRoutes() {
       <Route element={<AppShell />}>
         <Route index element={routeElement(<DashboardPage />)} />
         <Route path="tool-library" element={routeElement(<ToolLibraryPage />)} />
-        <Route path="tool-guides/:toolTypeId" element={routeElement(<ToolGuidePage />)} />
+        <Route path="tool-guides/types/:toolTypeId" element={routeElement(<ToolGuidePage />)} />
+        <Route path="tool-guides/:guideSlug" element={routeElement(<ToolGuidePage />)} />
+        <Route path="tools/:catalogItemId/guide" element={routeElement(<ToolGuidePage />)} />
         <Route path="my-tools" element={routeElement(<MyToolsPage />)} />
         <Route path="materials" element={routeElement(<MaterialsPage />)} />
         <Route path="projects" element={routeElement(<ProjectsPage />)} />

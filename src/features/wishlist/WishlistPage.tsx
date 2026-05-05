@@ -26,6 +26,7 @@ import {
 import { useActiveMaterials, useActiveProjects, useActiveWishlistItems, useToolLibraryData } from '../../data/hooks'
 import type { Material, WishlistItem, WishlistItemFormValues, WishlistMaterialConversionValues, WishlistToolConversionValues } from '../../data/schema'
 import { powerTypes, toolCategories, toolConditions, wishlistItemTypes, wishlistPriorities, wishlistStatuses } from '../../data/schema'
+import { toolTypeGuidePath } from '../../lib/guides/allToolsGuideSystem'
 import { priorityTone } from '../../lib/utils/status'
 
 const tabs = ['All Items', 'Tools', 'Materials', 'Project Needs']
@@ -112,7 +113,7 @@ export function WishlistPage() {
                   {item.status}
                 </div>
                 <div className="flex items-center gap-2">
-                  {item.toolTypeId && <Button size="sm" variant="secondary" icon={<BookOpen size={15} />} onClick={() => navigate(`/tool-guides/${item.toolTypeId}`)}>Guide</Button>}
+                  {item.toolTypeId && <Button size="sm" variant="secondary" icon={<BookOpen size={15} />} onClick={() => navigate(toolTypeGuidePath(item.toolTypeId!))}>Guide</Button>}
                   {item.status === 'Not Purchased' && <Button size="sm" variant="outline" icon={<CheckSquare size={15} />} onClick={() => void markWishlistPurchased(item.id)}>Mark Purchased</Button>}
                   {item.status === 'Purchased' && <Button size="sm" variant="primary" onClick={() => setConversionItem(item)}>Convert</Button>}
                   <Button size="icon" variant="secondary" aria-label="Edit wishlist item" onClick={() => { setModalItem(item); setModalOpen(true) }}><Edit3 size={16} /></Button>

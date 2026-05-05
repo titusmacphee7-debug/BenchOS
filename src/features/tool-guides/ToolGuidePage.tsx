@@ -27,6 +27,19 @@ import type { ToolGuideSection } from '../../data/schema'
 import { useBenchXp } from '../../lib/benchxp/useBenchXp'
 import type { BenchXpEvidence, BenchXpProgress, BenchXpRecommendation } from '../../lib/benchxp/benchXpApi'
 import {
+  buildCatalogGuideRouteIndex,
+  getCategoryGuideFoundation,
+  guideIdForResolvedRoute,
+  guideStatusForRoute,
+  modelOverlayFacts,
+  resolveGuideRoute,
+  statusDescription,
+  statusTone,
+  templateGuideSectionsForRoute,
+  type GuideContentStatus,
+  type ResolvedGuideRoute,
+} from '../../lib/guides/allToolsGuideSystem'
+import {
   getFamiliarityLabel,
   getToolMasteryGuideContent,
   guideSectionsForMode,
@@ -74,7 +87,7 @@ const sectionIcons: Record<string, LucideIcon> = {
 }
 
 export function ToolGuidePage() {
-  const { toolTypeId } = useParams()
+  const { guideSlug, toolTypeId: routeToolTypeId, catalogItemId } = useParams()
   const { items } = useToolCatalogData()
   const guideSections = useToolGuideSections()
   const masteryGuides = useMasteryGuides()
@@ -83,20 +96,34 @@ export function ToolGuidePage() {
   const [depthMode, setDepthMode] = useState<GuideDepthMode>('quick')
   const [actionNotice, setActionNotice] = useState('')
 
-  if (!toolTypeId) return <Navigate to="/tool-library" replace />
+  const routeIndex = useMemo(() => buildCatalogGuideRouteIndex(items), [items])
+  const resolvedRoute = resolveGuideRoute({ guideSlug, toolTypeId: routeToolTypeId, catalogItemId }, routeIndex)
 
-  const tool = items.find((item) => item.internalToolTypeId === toolTypeId)
+  if (!resolvedRoute && items.length === 0 && (guideSlug || catalogItemId)) {
+    return (
+      <Card>
+        <CardTitle title="Loading guide metadata" />
+        <p className="text-sm leading-6 text-bench-muted">BenchOS is mapping the Tool Library catalog to the guide system.</p>
+      </Card>
+    )
+  }
+
+  if (!resolvedRoute) return <Navigate to="/tool-library" replace />
+
+  const toolTypeId = resolvedRoute.toolTypeId
+  const tool = resolvedRoute.kind === 'catalog-item' ? resolvedRoute.catalogItem : items.find((item) => item.internalToolTypeId === toolTypeId)
   const legacyGuide = resolveToolGuide(toolTypeId, guideSections, masteryGuides)
   const structuredGuide = getToolMasteryGuideContent(toolTypeId)
-  if (!structuredGuide && !legacyGuide && !tool) return <Navigate to="/tool-library" replace />
-
-  const title = structuredGuide?.title ?? tool?.toolType.name ?? masteryGuides.find((item) => item.toolTypeId === toolTypeId)?.toolName ?? toolTypeId
+  const title = resolvedRoute.kind === 'catalog-item'
+    ? resolvedRoute.displayName
+    : structuredGuide?.title ?? tool?.toolType.name ?? masteryGuides.find((item) => item.toolTypeId === toolTypeId)?.toolName ?? toolTypeId
   const category = structuredGuide?.category ?? tool?.toolType.category
-  const sections = structuredGuide ? guideSectionsForMode(structuredGuide, depthMode) : legacySections(legacyGuide?.sections ?? [])
+  const sections = structuredGuide ? guideSectionsForMode(structuredGuide, depthMode) : legacyGuide ? legacySections(legacyGuide.sections) : templateGuideSectionsForRoute(resolvedRoute, depthMode)
+  const contentStatuses = guideStatusForRoute(resolvedRoute, structuredGuide)
   const ownedCatalogCount = items.filter((item) => item.internalToolTypeId === toolTypeId).length
   const matchingOwnedTools = ownedTools.filter((ownedTool) => ownedTool.toolTypeId === toolTypeId)
   const primaryOwnedTool = matchingOwnedTools[0]
-  const guideId = structuredGuide ? guideIdForToolType(structuredGuide.toolTypeId) : undefined
+  const guideId = guideIdForResolvedRoute(resolvedRoute)
   const progress = guideId ? benchXp.state.progress.find((item) => item.guideId === guideId) : undefined
   const isFavorite = guideId ? benchXp.state.favoriteGuideIds.includes(guideId) : false
   const guideEvidence = progress ? benchXp.state.evidence.filter((item) => item.progressId === progress.id || item.guideId === progress.guideId) : []
@@ -133,6 +160,7 @@ export function ToolGuidePage() {
           <div className="grid gap-6 lg:grid-cols-[1fr_360px] lg:items-end">
             <div>
               <div className="flex flex-wrap gap-2">
+                <StatusPill label={resolvedRoute.kind === 'catalog-item' ? 'Catalog guide' : 'Tool-type guide'} tone="orange" />
                 <StatusPill label="Tool Mastery Guide" tone="orange" />
                 {category && <StatusPill label={category} tone="blue" />}
                 {structuredGuide && <StatusPill label={`${structuredGuide.riskClass} risk`} tone={riskTone(structuredGuide.riskClass)} />}
@@ -140,7 +168,9 @@ export function ToolGuidePage() {
               </div>
               <h1 className="mt-4 max-w-3xl text-3xl font-black leading-tight text-bench-text md:text-4xl">{title} Guide</h1>
               <p className="mt-3 max-w-3xl text-sm leading-7 text-bench-muted">
-                {structuredGuide?.summary ?? 'Practical guidance connected to readiness, accessories, consumables, and BenchXP familiarity.'}
+                {resolvedRoute.kind === 'catalog-item'
+                  ? `This dedicated page uses the ${tool?.toolType.name ?? toolTypeId} foundation with ${resolvedRoute.brand} catalog context. Model-specific details stay labeled until reviewed.`
+                  : structuredGuide?.summary ?? 'Practical guidance connected to readiness, accessories, consumables, and BenchXP familiarity.'}
               </p>
               <div className="mt-5 flex flex-wrap gap-3">
                 <Button variant="primary" icon={<PlayIcon />} disabled={benchXp.loading || !structuredGuide} onClick={() => void startGuide()}>
@@ -172,7 +202,8 @@ export function ToolGuidePage() {
         </div>
       </section>
 
-      <DepthSelector value={depthMode} onChange={setDepthMode} disabled={!structuredGuide} />
+      <DepthSelector value={depthMode} onChange={setDepthMode} disabled={false} />
+      <GuideStatusPanel route={resolvedRoute} statuses={contentStatuses} />
 
       {actionNotice && (
         <Card className="border-bench-green/35 bg-bench-green/10">
@@ -199,15 +230,16 @@ export function ToolGuidePage() {
           <Card>
             <CardTitle title="Guide Source" />
             <div className="space-y-3 text-sm text-bench-muted">
-              <p>{structuredGuide ? 'Structured v0.02 guide content.' : 'Legacy guide fallback content.'}</p>
+              <p>{structuredGuide ? 'Structured v0.02 guide content.' : legacyGuide ? 'Legacy guide fallback content.' : 'Template-based inherited guide content.'}</p>
               <p>{ownedCatalogCount} catalog item{ownedCatalogCount === 1 ? '' : 's'} currently map to this tool type.</p>
             </div>
           </Card>
+          <ModelOverlayPanel route={resolvedRoute} statuses={contentStatuses} />
         </aside>
 
         <main className="grid gap-4">
-          {structuredGuide && <QuickReferenceCard guide={structuredGuide} ownedCount={matchingOwnedTools.length} />}
-          {structuredGuide && <SafetyCallout guide={structuredGuide} />}
+          {structuredGuide ? <QuickReferenceCard guide={structuredGuide} ownedCount={matchingOwnedTools.length} /> : <InheritedQuickReferenceCard route={resolvedRoute} ownedCount={matchingOwnedTools.length} />}
+          {structuredGuide ? <SafetyCallout guide={structuredGuide} /> : <InheritedSafetyCallout route={resolvedRoute} statuses={contentStatuses} />}
           {sections.map((section) => (
             <GuideSectionCard key={section.title} title={section.title} items={section.items} />
           ))}
@@ -295,6 +327,99 @@ function DepthSelector({ value, onChange, disabled }: { value: GuideDepthMode; o
   )
 }
 
+function GuideStatusPanel({ route, statuses }: { route: ResolvedGuideRoute; statuses: GuideContentStatus[] }) {
+  const foundation = getCategoryGuideFoundation(route.kind === 'catalog-item' ? route.catalogItem.toolType.category : undefined)
+  return (
+    <Card className="border-bench-orange/25 bg-white/[0.018]">
+      <div className="grid gap-4 lg:grid-cols-[1fr_1.1fr] lg:items-start">
+        <div>
+          <div className="flex flex-wrap gap-2">
+            {statuses.slice(0, 5).map((status) => (
+              <StatusPill key={status} label={status} tone={statusTone(status)} />
+            ))}
+          </div>
+          <h2 className="mt-3 text-xl font-black text-bench-text">Guide content status</h2>
+          <p className="mt-2 text-sm leading-7 text-bench-muted">
+            {route.kind === 'catalog-item'
+              ? `BenchOS created a dedicated guide page for this catalog item, then layered it on top of the ${route.catalogItem.toolType.name} and ${route.catalogItem.toolType.category} guide foundations.`
+              : 'This route keeps the original tool-type guide available while catalog-specific guide pages roll out.'}
+          </p>
+          <p className="mt-2 text-sm leading-7 text-bench-muted">
+            Template-based content stays honest: it gives useful category and tool-type guidance without pretending brand/model notes are fully verified.
+          </p>
+        </div>
+        <div className="grid gap-2">
+          <div className="rounded-xl border border-bench-border bg-white/[0.025] p-3">
+            <p className="text-sm font-bold text-bench-text">{foundation.template}</p>
+            <p className="mt-1 text-sm leading-6 text-bench-muted">{foundation.safetyIntro}</p>
+          </div>
+          {statuses.slice(0, 4).map((status) => (
+            <div key={`${status}-description`} className="rounded-xl border border-bench-border bg-white/[0.025] p-3">
+              <p className="text-sm font-bold text-bench-text">{status}</p>
+              <p className="mt-1 text-sm leading-6 text-bench-muted">{statusDescription(status)}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </Card>
+  )
+}
+
+function ModelOverlayPanel({ route, statuses }: { route: ResolvedGuideRoute; statuses: GuideContentStatus[] }) {
+  if (route.kind !== 'catalog-item') return null
+  const facts = modelOverlayFacts(route)
+  const specs = route.catalogItem.specs.slice(0, 4)
+  const sources = route.catalogItem.sourceNotes.slice(0, 3)
+
+  return (
+    <Card>
+      <CardTitle title="Model Context" />
+      <p className="text-sm leading-6 text-bench-muted">
+        This panel shows catalog metadata only. BenchOS does not invent missing specs or manufacturer warnings.
+      </p>
+      <div className="mt-4 grid gap-2">
+        {facts.map(([label, value]) => (
+          <div key={label} className="rounded-lg border border-bench-border bg-white/[0.025] px-3 py-2 text-sm">
+            <span className="font-semibold text-bench-text">{label}: </span>
+            <span className="text-bench-muted">{value}</span>
+          </div>
+        ))}
+      </div>
+      <div className="mt-4">
+        <p className="text-xs font-semibold uppercase text-bench-muted">Specs</p>
+        <div className="mt-2 grid gap-2">
+          {specs.length > 0 ? specs.map((spec) => (
+            <div key={spec.id} className="rounded-lg border border-bench-border bg-white/[0.025] px-3 py-2 text-sm text-bench-muted">
+              <span className="font-semibold text-bench-text">{spec.label}: </span>{String(spec.value)}{spec.unit ? ` ${spec.unit}` : ''}
+            </div>
+          )) : (
+            <p className="rounded-lg border border-bench-yellow/30 bg-bench-yellow/10 px-3 py-2 text-sm leading-6 text-bench-muted">
+              Specs unavailable. Check the manufacturer manual before setup.
+            </p>
+          )}
+        </div>
+      </div>
+      <div className="mt-4">
+        <p className="text-xs font-semibold uppercase text-bench-muted">Source notes</p>
+        <div className="mt-2 grid gap-2">
+          {sources.length > 0 ? sources.map((source) => (
+            <p key={source.id} className="rounded-lg border border-bench-border bg-white/[0.025] px-3 py-2 text-sm leading-6 text-bench-muted">
+              {source.sourceName}: {source.observedLabel}
+            </p>
+          )) : (
+            <p className="rounded-lg border border-bench-border bg-white/[0.025] px-3 py-2 text-sm text-bench-muted">No source note attached yet.</p>
+          )}
+        </div>
+      </div>
+      {statuses.includes('Model Overlay Missing') && (
+        <p className="mt-4 rounded-lg border border-bench-orange/30 bg-bench-orange/10 px-3 py-2 text-sm leading-6 text-bench-muted">
+          Model-specific notes are not fully reviewed yet. The main guide content stays inherited from the tool-type foundation.
+        </p>
+      )}
+    </Card>
+  )
+}
+
 function SafetyCallout({ guide }: { guide: ToolMasteryGuideContent }) {
   return (
     <Card className="border-bench-orange/35 bg-bench-orange/10">
@@ -308,6 +433,29 @@ function SafetyCallout({ guide }: { guide: ToolMasteryGuideContent }) {
           <h2 className="mt-3 text-xl font-black text-bench-text">Safety familiarity first</h2>
           <p className="mt-2 text-sm leading-7 text-bench-muted">
             Review PPE, setup stability, and the tool manual before project work. BenchXP records familiarity signals; it is not certification or proof of safe competence.
+          </p>
+        </div>
+      </div>
+    </Card>
+  )
+}
+
+function InheritedSafetyCallout({ route, statuses }: { route: ResolvedGuideRoute; statuses: GuideContentStatus[] }) {
+  const category = route.kind === 'catalog-item' ? route.catalogItem.toolType.category : undefined
+  const foundation = getCategoryGuideFoundation(category)
+  return (
+    <Card className="border-bench-orange/35 bg-bench-orange/10">
+      <div className="flex flex-col gap-4 md:flex-row md:items-start">
+        <IconTile icon={ShieldCheck} tone="orange" size="lg" />
+        <div>
+          <div className="flex flex-wrap gap-2">
+            <StatusPill label={foundation.reviewLevel === 'strict' ? 'Strict safety review needed' : 'Standard safety review'} tone={foundation.reviewLevel === 'strict' ? 'red' : 'yellow'} />
+            <StatusPill label="No hard gate" tone="muted" />
+            {statuses.includes('Template-Based') && <StatusPill label="Template-based" tone="orange" />}
+          </div>
+          <h2 className="mt-3 text-xl font-black text-bench-text">Safety familiarity first</h2>
+          <p className="mt-2 text-sm leading-7 text-bench-muted">
+            {foundation.safetyIntro} This page is useful for setup thinking, but brand/model-specific warnings are not fully reviewed yet. Check the manufacturer manual before project work.
           </p>
         </div>
       </div>
@@ -338,6 +486,41 @@ function QuickReferenceCard({ guide, ownedCount }: { guide: ToolMasteryGuideCont
         <QuickReferenceItem icon={Hammer} label="Key setup check" detail={mostImportantSetup} />
         <QuickReferenceItem icon={Gauge} label="Common mistake" detail={commonMistake} />
         <QuickReferenceItem icon={ClipboardCheck} label="Maintenance habit" detail={guide.maintenance[0] ?? 'Inspect and clean after use.'} />
+      </div>
+    </Card>
+  )
+}
+
+function InheritedQuickReferenceCard({ route, ownedCount }: { route: ResolvedGuideRoute; ownedCount: number }) {
+  const item = route.kind === 'catalog-item' ? route.catalogItem : undefined
+  const foundation = getCategoryGuideFoundation(item?.toolType.category)
+  const displayName = item?.displayName ?? route.title.replace(/ Guide$/, '')
+  const typeName = item?.toolType.name ?? route.toolTypeId
+  const firstProject = item?.toolType.commonProjects[0] ?? 'general workshop work'
+  const firstMaterial = item?.toolType.materials[0] ?? 'the project material'
+
+  return (
+    <Card>
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div>
+          <div className="flex flex-wrap gap-2">
+            <StatusPill label="Quick reference" tone="orange" />
+            <StatusPill label={ownedCount > 0 ? `${ownedCount} owned` : 'guide-only'} tone={ownedCount > 0 ? 'green' : 'muted'} />
+            <StatusPill label={foundation.template} tone="blue" />
+          </div>
+          <h2 className="mt-3 text-2xl font-black text-bench-text">What to know before using {displayName}.</h2>
+          <p className="mt-2 text-sm leading-7 text-bench-muted">
+            This guide inherits the {typeName} and {item?.toolType.category ?? 'general workshop'} foundation. It gives practical safety, setup, and readiness context without pretending the model overlay is complete.
+          </p>
+        </div>
+      </div>
+      <div className="mt-5 grid gap-3 md:grid-cols-2">
+        <QuickReferenceItem icon={CheckCircle2} label="Use it for" detail={firstProject} />
+        <QuickReferenceItem icon={AlertTriangle} label="Do not use it when" detail="the setup is unstable, the accessory is mismatched, or the manual requires a different process" />
+        <QuickReferenceItem icon={ShieldCheck} label="Safety focus" detail={foundation.safetyIntro} />
+        <QuickReferenceItem icon={Hammer} label="Key setup check" detail={foundation.setupFocus} />
+        <QuickReferenceItem icon={Gauge} label="Material check" detail={`Confirm compatibility with ${firstMaterial} before project work.`} />
+        <QuickReferenceItem icon={ClipboardCheck} label="Content status" detail="Model-specific notes are visible only when reviewed; missing specs stay marked as missing." />
       </div>
     </Card>
   )
@@ -687,10 +870,6 @@ function riskTone(risk: ToolMasteryGuideContent['riskClass']) {
 
 function sectionId(title: string) {
   return title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
-}
-
-function guideIdForToolType(toolTypeId: string) {
-  return `guide-${toolTypeId}`
 }
 
 function formatOwnedTool(tool: { brand?: string; model?: string; name: string }) {

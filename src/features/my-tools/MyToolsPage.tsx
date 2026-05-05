@@ -28,6 +28,7 @@ import {
 import { useActiveUserTools, useMaintenanceLogs, useToolUsageLogs } from '../../data/hooks'
 import type { ToolCondition, ToolLibraryItem, UserTool, UserToolFormValues } from '../../data/schema'
 import { powerTypes, toolCategories, toolConditions } from '../../data/schema'
+import { toolTypeGuidePath } from '../../lib/guides/allToolsGuideSystem'
 import { filterUserTools, sortUserTools, uniqueDefined } from '../../lib/inventory/inventory'
 import { conditionTone, usageTone } from '../../lib/utils/status'
 
@@ -230,7 +231,7 @@ export function MyToolsPage() {
                 <div className="mt-5 grid gap-2">
                   <Button variant="primary" icon={<Edit3 size={18} />} onClick={() => setModalState({ mode: 'edit', tool: selectedTool })}>Edit Tool</Button>
                   {selectedTool.toolTypeId && (
-                    <Button variant="outline" icon={<BookOpen size={18} />} onClick={() => navigate(`/tool-guides/${selectedTool.toolTypeId}`)}>Open Tool Guide</Button>
+                    <Button variant="outline" icon={<BookOpen size={18} />} onClick={() => navigate(toolTypeGuidePath(selectedTool.toolTypeId!))}>Open Tool Guide</Button>
                   )}
                   <Button icon={<Clock size={18} />} onClick={() => setUsageModalOpen(true)}>Log Tool Use</Button>
                   <Button icon={<Wrench size={18} />} onClick={() => setMaintenanceModalOpen(true)}>Log Maintenance</Button>

@@ -18,6 +18,7 @@ import {
 import { useActiveProjects, useToolBuyingPreferences, useToolCatalogData } from '../../data/hooks'
 import type { Project, SkillLevel, ToolCatalogLibraryItem } from '../../data/schema'
 import { skillLevels } from '../../data/schema'
+import { buildCatalogGuideRouteIndex, catalogGuidePath } from '../../lib/guides/allToolsGuideSystem'
 import { sortCatalogForPreferences } from '../../lib/preferences/accountPersonalization'
 import { searchToolCatalog } from '../../lib/search/toolSearch'
 
@@ -47,6 +48,7 @@ export function ToolLibraryPage() {
   const highlightTimeout = useRef<number | undefined>(undefined)
   const noticeId = useRef(0)
   const categories = useMemo(() => ['All', ...new Set(items.map((tool) => tool.toolType.category))].sort(), [items])
+  const guideRouteIndex = useMemo(() => buildCatalogGuideRouteIndex(items), [items])
   const filteredTools = useMemo(() => {
     const searchResults = searchToolCatalog(items, query, { category, skillLevel })
     return query.trim() ? searchResults : sortCatalogForPreferences(searchResults, preferences)
@@ -294,7 +296,7 @@ export function ToolLibraryPage() {
         onAddToMyTools={(tool) => void handleAddToMyTools(tool)}
         onAddToWishlist={(tool) => void handleAddToWishlist(tool)}
         onAddToProject={openProjectRequirementModal}
-        onOpenGuide={(tool) => navigate(`/tool-guides/${tool.internalToolTypeId}`)}
+        onOpenGuide={(tool) => navigate(catalogGuidePath(tool, guideRouteIndex))}
       />
       <ProjectRequirementQuickModal
         tool={projectRequirementTool}
