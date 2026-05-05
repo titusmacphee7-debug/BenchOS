@@ -5,16 +5,23 @@
 - Every committed app/source-code change must increase the visible BenchOS app version by `0.01`.
 - The app version is tracked in `src/lib/version.ts`.
 - The sidebar and Settings page read from that shared version file.
-- `package.json` uses npm-safe semver, so app `v0.05` is represented as package version `0.0.5`.
+- `package.json` uses npm-safe semver, so app `v0.06` is represented as package version `0.0.6`.
 - Coordinator, Planner, and implementation summaries should mention the current app version after each code-changing task.
 
 ## Current Version
 
 ```text
-BenchOS v0.05
+BenchOS v0.06
 ```
 
 ## History
+
+### v0.06 - HTTPS Browser Hardening
+
+- Added Netlify security headers for deployed pages.
+- Added `upgrade-insecure-requests` and `block-all-mixed-content` to reduce browser mixed-content warnings.
+- Added `Referrer-Policy` and `X-Content-Type-Options` hardening.
+- Preserved app behavior and routing.
 
 ### v0.05 - Auth0 React SDK Login
 

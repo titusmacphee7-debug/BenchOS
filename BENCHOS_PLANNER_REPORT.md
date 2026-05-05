@@ -2,13 +2,14 @@
 
 ## Version Tracking
 
-- Current app version: `v0.05`.
+- Current app version: `v0.06`.
 - Version source: `src/lib/version.ts`.
 - Version rule: every committed app/source-code change increases the visible app version by `0.01`.
 - Future Planner, Coordinator, Code Editor, Cleaner, and Reviewer notes should reference the current app version when planning or summarizing code-changing work.
 - `v0.03` includes the mandatory auth shell and no automatic personal sample data by default.
 - `v0.04` removes the approved unused starter assets `public/icons.svg` and `src/assets/hero.png`.
 - `v0.05` integrates the official Auth0 React SDK as the primary login path while keeping Supabase Auth available for the existing sync fallback.
+- `v0.06` adds Netlify HTTPS/mixed-content security headers after the owner saw a browser `Not secure` warning.
 
 ## 1. Current Product Understanding
 

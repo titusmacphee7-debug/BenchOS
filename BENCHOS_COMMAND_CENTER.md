@@ -17,7 +17,7 @@ This file keeps the BenchOS Codex chats coordinated and safe. Use plain language
 - Real BenchOS app folder: `C:\Users\slaye\Documents\Codex\BenchOS`.
 - Launcher folder: `C:\Users\slaye\OneDrive\Documents\New project`.
 - Main branch: `main`.
-- Current tracked app version: `v0.05`.
+- Current tracked app version: `v0.06`.
 - Version rule: every committed app/source-code change must increase the visible app version by `0.01`.
 - Shared version source: `src/lib/version.ts`.
 - The main folder is the trusted coordination and review folder.
@@ -160,3 +160,10 @@ Paste future chat summaries below this line.
   - Client ID: `Y0a2nfZcrGrwkAFWpeeHn6CoZPmcwCKh`
 - Version bumped from `v0.04` to `v0.05`.
 - Vite local dev is pinned to port `5173` with `--strictPort` for Auth0 callback consistency.
+
+### v0.06 HTTPS Browser Hardening Entry
+
+- Owner reported Chrome showing `Not secure` for `appbenchos.com` even though the certificate was valid.
+- Live server check showed Netlify serving HTTPS with HSTS and a valid Let's Encrypt certificate.
+- Added Netlify headers to upgrade insecure subrequests and block mixed content.
+- Version bumped from `v0.05` to `v0.06`.
