@@ -127,6 +127,17 @@ I verified that the new docs exist and include the requested safety sections, co
 
 I did not run app build/lint/test checks because this setup pass only changed documentation and because worktree creation is blocked until Git is available. Future code-editing worktrees should run the relevant checks before merging.
 
+Final update:
+
+- After Git setup and worktree creation, dependencies were installed in all three worktrees with `npm ci --legacy-peer-deps`.
+- The worktrees stayed clean after dependency install.
+- `node_modules` remained ignored in each worktree.
+- `npm run lint` passed.
+- `npm run test` passed: 16 test files and 76 tests.
+- `npm run build` passed.
+- Build produced a Vite chunk-size warning, but not a failure.
+- No cleanup, refactor, app behavior, schema, auth, route, or UI redesign work was started.
+
 ## Commands Run
 
 Inspection commands included:
@@ -192,6 +203,7 @@ git status --short --branch
 
 6. Continue work only if the status is clean or Codex clearly explains the existing changes.
 7. Use `WORKTREE_SETUP_SUMMARY.md` for the exact prompts to run in each worktree.
+8. Start with `BenchOS-audit` before allowing cleanup edits.
 
 ## Warnings
 

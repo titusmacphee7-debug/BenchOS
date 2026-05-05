@@ -130,6 +130,51 @@ The actual commit id shown by `git worktree list` can change as setup docs are c
 - Audit worktrees should write reports, not app changes.
 - Code-editing worktrees should run checks before merge.
 
+## Dependency Setup Completed
+
+Dependencies were installed in all three worktrees with:
+
+```bash
+npm ci --legacy-peer-deps
+```
+
+Completed folders:
+
+- `C:\Users\slaye\Documents\Codex\BenchOS-audit`
+- `C:\Users\slaye\Documents\Codex\BenchOS-cleanup`
+- `C:\Users\slaye\Documents\Codex\BenchOS-ui-polish`
+
+npm reported 0 vulnerabilities in each worktree.
+
+Notes:
+
+- `node_modules` is ignored in each worktree.
+- npm printed deprecation warnings for existing packages `source-map@0.8.0-beta.0` and `glob@11.1.0`.
+- No dependency versions were changed.
+- No app code was changed.
+
+## Final Verification
+
+These checks passed in the main BenchOS folder:
+
+```bash
+npm run lint
+npm run test
+npm run build
+```
+
+Test result:
+
+```text
+16 test files passed
+76 tests passed
+```
+
+Build note:
+
+- Production build completed successfully.
+- Vite reported a chunk-size warning for a JavaScript bundle larger than 500 kB. This is a warning, not a failed build.
+
 ## Safe Review Flow
 
 1. Open one worktree.

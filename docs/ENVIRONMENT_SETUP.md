@@ -136,6 +136,22 @@ Never ask Codex to print the secret values. A safe instruction is:
 Check whether .env.local exists and list only the variable names, not the values.
 ```
 
+## Current Worktree Dependency Status
+
+Dependencies have been installed in the three setup worktrees with:
+
+```bash
+npm ci --legacy-peer-deps
+```
+
+Prepared worktrees:
+
+- `C:\Users\slaye\Documents\Codex\BenchOS-audit`
+- `C:\Users\slaye\Documents\Codex\BenchOS-cleanup`
+- `C:\Users\slaye\Documents\Codex\BenchOS-ui-polish`
+
+Each worktree still needs its own `.env.local` only if you want Supabase Auth or cloud sync there. BenchOS Local Mode works without Supabase env vars.
+
 ## Codex App Local Environment Setup
 
 No `.codex` folder was found in this repo. Because Codex App local environment config formats can vary, do not guess a config file.
