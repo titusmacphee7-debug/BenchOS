@@ -31,6 +31,12 @@ Only user/workshop data syncs. Seeded catalog/library records stay local app dat
 
 See [docs/supabase-setup.md](docs/supabase-setup.md) for the full setup checklist.
 
+## Netlify Deployment
+
+BenchOS is ready to deploy to Netlify as a Vite + React app. Use `npm run build` as the build command and `dist` as the publish directory.
+
+For the full setup checklist, including `app.benchos.com` DNS instructions and environment variable names, see [docs/NETLIFY_DEPLOYMENT.md](docs/NETLIFY_DEPLOYMENT.md).
+
 ## Validation
 
 ```bash
