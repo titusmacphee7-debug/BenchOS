@@ -17,7 +17,7 @@ This file keeps the BenchOS Codex chats coordinated and safe. Use plain language
 - Real BenchOS app folder: `C:\Users\slaye\Documents\Codex\BenchOS`.
 - Launcher folder: `C:\Users\slaye\OneDrive\Documents\New project`.
 - Main branch: `main`.
-- Current tracked app version: `v0.03`.
+- Current tracked app version: `v0.04`.
 - Version rule: every committed app/source-code change must increase the visible app version by `0.01`.
 - Shared version source: `src/lib/version.ts`.
 - The main folder is the trusted coordination and review folder.
@@ -137,8 +137,17 @@ Paste future chat summaries below this line.
 
 ### Version Tracking Entry
 
-- Current app version is now tracked as `v0.03`.
+- Current app version is now tracked as `v0.04`.
 - `src/lib/version.ts` is the source for visible app version text.
 - Sidebar and Settings should read version text from the shared version module.
 - Future code-changing commits should bump the app version by `0.01` and add an entry to `VERSION_HISTORY.md`.
 - Mandatory auth shell was committed as `6c1c519`.
+
+### v0.04 Asset Deletion Entry
+
+- Owner explicitly approved deleting:
+  - `public/icons.svg`
+  - `src/assets/hero.png`
+- These files were previously tracked but locally deleted.
+- No app imports referenced these files at deletion time.
+- Version bumped from `v0.03` to `v0.04`.

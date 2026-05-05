@@ -2,11 +2,12 @@
 
 ## Version Tracking
 
-- Current app version: `v0.03`.
+- Current app version: `v0.04`.
 - Version source: `src/lib/version.ts`.
 - Version rule: every committed app/source-code change increases the visible app version by `0.01`.
 - Future Planner, Coordinator, Code Editor, Cleaner, and Reviewer notes should reference the current app version when planning or summarizing code-changing work.
 - `v0.03` includes the mandatory auth shell and no automatic personal sample data by default.
+- `v0.04` removes the approved unused starter assets `public/icons.svg` and `src/assets/hero.png`.
 
 ## 1. Current Product Understanding
 

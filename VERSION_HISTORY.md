@@ -5,16 +5,24 @@
 - Every committed app/source-code change must increase the visible BenchOS app version by `0.01`.
 - The app version is tracked in `src/lib/version.ts`.
 - The sidebar and Settings page read from that shared version file.
-- `package.json` uses npm-safe semver, so app `v0.03` is represented as package version `0.0.3`.
+- `package.json` uses npm-safe semver, so app `v0.04` is represented as package version `0.0.4`.
 - Coordinator, Planner, and implementation summaries should mention the current app version after each code-changing task.
 
 ## Current Version
 
 ```text
-BenchOS v0.03
+BenchOS v0.04
 ```
 
 ## History
+
+### v0.04 - Remove Unused Starter Assets
+
+- Deleted approved unused asset files:
+  - `public/icons.svg`
+  - `src/assets/hero.png`
+- Preserved current app behavior.
+- No routes, schema, auth, or dependencies changed.
 
 ### v0.03 - Mandatory Auth Shell
 
